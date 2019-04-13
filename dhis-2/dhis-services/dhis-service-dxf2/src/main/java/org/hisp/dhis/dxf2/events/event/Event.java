@@ -96,6 +96,8 @@ public class Event
 
     private String lastUpdatedAtClient;
 
+    private String categoryOptionCombo;
+
     private String attributeOptionCombo;
 
     private String attributeCategoryOptions;
@@ -372,6 +374,18 @@ public class Event
     {
         this.lastUpdatedAtClient = lastUpdatedAtClient;
     }
+    
+    @JsonProperty
+    @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
+    public String getCategoryOptionCombo() 
+    {
+		return categoryOptionCombo;
+	}
+
+ 	public void setCategoryOptionCombo( String categoryOptionCombo ) 
+ 	{
+		this.categoryOptionCombo = categoryOptionCombo;
+	}
 
     @JsonProperty
     @JacksonXmlProperty( namespace = DxfNamespaces.DXF_2_0 )
@@ -512,6 +526,7 @@ public class Event
             ", lastUpdated='" + lastUpdated + '\'' +
             ", createdAtClient='" + createdAtClient + '\'' +
             ", lastUpdatedAtClient='" + lastUpdatedAtClient + '\'' +
+            ", categoryOptionCombo='" + categoryOptionCombo + '\'' +
             ", attributeOptionCombo='" + attributeOptionCombo + '\'' +
             ", attributeCategoryOptions='" + attributeCategoryOptions + '\'' +
             ", completedBy='" + completedBy + '\'' +

@@ -69,6 +69,8 @@ public class ProgramStageInstance
 
     private OrganisationUnit organisationUnit;
 
+    private CategoryOptionCombo categoryOptionCombo;
+
     private CategoryOptionCombo attributeOptionCombo;
 
     private List<MessageConversation> messageConversations = new ArrayList<>();
@@ -216,6 +218,16 @@ public class ProgramStageInstance
     {
         this.organisationUnit = organisationUnit;
         return this;
+    }
+
+    public CategoryOptionCombo getCategoryOptionCombo()
+    {
+        return categoryOptionCombo;
+    }
+
+    public void setCategoryOptionCombo( CategoryOptionCombo categoryOptionCombo )
+    {
+        this.categoryOptionCombo = categoryOptionCombo;
     }
 
     public CategoryOptionCombo getAttributeOptionCombo()

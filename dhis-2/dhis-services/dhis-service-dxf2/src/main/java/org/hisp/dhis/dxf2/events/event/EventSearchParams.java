@@ -68,6 +68,7 @@ public class EventSearchParams
     public static final String EVENT_LATITUDE_ID = "latitude";
     public static final String EVENT_PROGRAM_STAGE_ID = "programStage";
     public static final String EVENT_PROGRAM_ID = "program";
+    public static final String EVENT_CATEGORY_OPTION_COMBO_ID = "categoryOptionCombo";
     public static final String EVENT_ATTRIBUTE_OPTION_COMBO_ID = "attributeOptionCombo";
     public static final String EVENT_DELETED = "deleted";
     public static final String EVENT_GEOMETRY = "geometry";
@@ -108,6 +109,8 @@ public class EventSearchParams
     private Date dueDateEnd;
 
     private CategoryOptionCombo categoryOptionCombo;
+    
+    private CategoryOptionCombo attributeOptionCombo;
 
     private IdSchemes idSchemes;
 
@@ -490,6 +493,16 @@ public class EventSearchParams
     public void setCategoryOptionCombo( CategoryOptionCombo categoryOptionCombo )
     {
         this.categoryOptionCombo = categoryOptionCombo;
+    }
+    
+    public CategoryOptionCombo getAttributeOptionCombo()
+    {
+        return attributeOptionCombo;
+    }
+
+    public void setAttributeOptionCombo( CategoryOptionCombo attributeOptionCombo )
+    {
+        this.attributeOptionCombo = attributeOptionCombo;
     }
 
     public void setEvents( Set<String> events )

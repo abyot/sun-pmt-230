@@ -35,6 +35,7 @@ import com.vividsolutions.jts.io.ParseException;
 
 import org.apache.commons.io.IOUtils;
 import org.hisp.dhis.category.CategoryOptionCombo;
+import org.hisp.dhis.category.CategoryService;
 import org.hisp.dhis.common.DhisApiVersion;
 import org.hisp.dhis.common.Grid;
 import org.hisp.dhis.common.IdSchemes;
@@ -190,6 +191,9 @@ public class EventController
 
     @Autowired
     private TrackerKafkaManager trackerKafkaManager;
+    
+    @Autowired
+    protected CategoryService categoryService;
 
     private Schema schema;
 
@@ -224,6 +228,7 @@ public class EventController
         @RequestParam( required = false ) Date lastUpdatedStartDate,
         @RequestParam( required = false ) Date lastUpdatedEndDate,
         @RequestParam( required = false ) EventStatus status,
+        @RequestParam( required = false ) String coc,
         @RequestParam( required = false ) String attributeCc,
         @RequestParam( required = false ) String attributeCos,
         @RequestParam( required = false ) boolean skipMeta,
@@ -255,6 +260,13 @@ public class EventController
         {
             throw new WebMessageException( WebMessageUtils.conflict( "Illegal attribute option combo identifier: " + attributeCc + " " + attributeCos ) );
         }
+        
+        CategoryOptionCombo categoryOptionCombo = null;
+        
+        if ( coc != null )
+        {
+        	categoryOptionCombo = categoryService.getCategoryOptionCombo( coc );
+        }
 
         Set<String> eventIds = TextUtils.splitToArray( event, TextUtils.SEMICOLON );
 
@@ -263,7 +275,7 @@ public class EventController
         skipPaging = PagerUtils.isSkipPaging( skipPaging, paging );
 
         EventSearchParams params = eventService.getFromUrl( program, programStage, programStatus, followUp,
-            orgUnit, ouMode, trackedEntityInstance, startDate, endDate, dueDateStart, dueDateEnd, lastUpdatedStartDate, lastUpdatedEndDate, status, attributeOptionCombo,
+            orgUnit, ouMode, trackedEntityInstance, startDate, endDate, dueDateStart, dueDateEnd, lastUpdatedStartDate, lastUpdatedEndDate, status, categoryOptionCombo, attributeOptionCombo,
             idSchemes, page, pageSize, totalPages, skipPaging, null, getGridOrderParams( order ), false, eventIds, filter,
             dataElement, includeAllDataElements, includeDeleted );
 
@@ -290,6 +302,7 @@ public class EventController
         @RequestParam( required = false ) Date lastUpdatedStartDate,
         @RequestParam( required = false ) Date lastUpdatedEndDate,
         @RequestParam( required = false ) EventStatus status,
+        @RequestParam( required = false ) String coc,
         @RequestParam( required = false ) String attributeCc,
         @RequestParam( required = false ) String attributeCos,
         @RequestParam( required = false ) boolean skipMeta,
@@ -321,6 +334,13 @@ public class EventController
         {
             throw new WebMessageException( WebMessageUtils.conflict( "Illegal attribute option combo identifier: " + attributeCc + " " + attributeCos ) );
         }
+        
+        CategoryOptionCombo categoryOptionCombo = null;
+        
+        if ( coc != null )
+        {
+        	categoryOptionCombo = categoryService.getCategoryOptionCombo( coc );
+        }
 
         Set<String> eventIds = TextUtils.splitToArray( event, TextUtils.SEMICOLON );
 
@@ -329,7 +349,7 @@ public class EventController
         skipPaging = PagerUtils.isSkipPaging( skipPaging, paging );
 
         EventSearchParams params = eventService.getFromUrl( program, programStage, programStatus, followUp,
-            orgUnit, ouMode, trackedEntityInstance, startDate, endDate, dueDateStart, dueDateEnd, lastUpdatedStartDate, lastUpdatedEndDate, status, attributeOptionCombo,
+            orgUnit, ouMode, trackedEntityInstance, startDate, endDate, dueDateStart, dueDateEnd, lastUpdatedStartDate, lastUpdatedEndDate, status, categoryOptionCombo, attributeOptionCombo,
             idSchemes, page, pageSize, totalPages, skipPaging, null, getGridOrderParams( order ), false, eventIds, filter,
             dataElement, includeAllDataElements, includeDeleted );
 
@@ -355,6 +375,7 @@ public class EventController
         @RequestParam( required = false ) Date lastUpdatedStartDate,
         @RequestParam( required = false ) Date lastUpdatedEndDate,
         @RequestParam( required = false ) EventStatus status,
+        @RequestParam( required = false ) String coc,
         @RequestParam( required = false ) String attributeCc,
         @RequestParam( required = false ) String attributeCos,
         @RequestParam( required = false ) boolean skipMeta,
@@ -386,6 +407,13 @@ public class EventController
         {
             throw new WebMessageException( WebMessageUtils.conflict( "Illegal attribute option combo identifier: " + attributeCc + " " + attributeCos ) );
         }
+        
+        CategoryOptionCombo categoryOptionCombo = null;
+        
+        if ( coc != null )
+        {
+        	categoryOptionCombo = categoryService.getCategoryOptionCombo( coc );
+        }
 
         Set<String> eventIds = TextUtils.splitToArray( event, TextUtils.SEMICOLON );
 
@@ -394,9 +422,9 @@ public class EventController
         skipPaging = PagerUtils.isSkipPaging( skipPaging, paging );
 
         EventSearchParams params = eventService.getFromUrl( program, programStage, programStatus, followUp,
-            orgUnit, ouMode, trackedEntityInstance, startDate, endDate, dueDateStart, dueDateEnd, lastUpdatedStartDate, lastUpdatedEndDate, status, attributeOptionCombo,
-            idSchemes, page, pageSize, totalPages, skipPaging, null, getGridOrderParams( order ), false, eventIds, filter,
-            dataElement, includeAllDataElements, includeDeleted );
+            orgUnit, ouMode, trackedEntityInstance, startDate, endDate, dueDateStart, dueDateEnd, lastUpdatedStartDate, lastUpdatedEndDate, status, 
+            categoryOptionCombo, attributeOptionCombo, idSchemes, page, pageSize, totalPages, skipPaging, null, getGridOrderParams( order ), 
+            false, eventIds, filter, dataElement, includeAllDataElements, includeDeleted );
 
         contextUtils.configureResponse( response, ContextUtils.CONTENT_TYPE_EXCEL, CacheStrategy.NO_CACHE );
         Grid grid = eventService.getEventsGrid( params );
@@ -421,6 +449,7 @@ public class EventController
         @RequestParam( required = false ) Date lastUpdatedStartDate,
         @RequestParam( required = false ) Date lastUpdatedEndDate,
         @RequestParam( required = false ) EventStatus status,
+        @RequestParam( required = false ) String coc,
         @RequestParam( required = false ) String attributeCc,
         @RequestParam( required = false ) String attributeCos,
         @RequestParam( required = false ) boolean skipMeta,
@@ -453,6 +482,13 @@ public class EventController
             throw new WebMessageException( WebMessageUtils.conflict( "Illegal attribute option combo identifier: " + attributeCc + " " + attributeCos ) );
         }
 
+        CategoryOptionCombo categoryOptionCombo = null;
+        
+        if ( coc != null )
+        {
+        	categoryOptionCombo = categoryService.getCategoryOptionCombo( coc );
+        }
+        
         Set<String> eventIds = TextUtils.splitToArray( event, TextUtils.SEMICOLON );
 
         lastUpdatedStartDate = lastUpdatedStartDate != null ? lastUpdatedStartDate : lastUpdated;
@@ -460,9 +496,9 @@ public class EventController
         skipPaging = PagerUtils.isSkipPaging( skipPaging, paging );
 
         EventSearchParams params = eventService.getFromUrl( program, programStage, programStatus, followUp,
-            orgUnit, ouMode, trackedEntityInstance, startDate, endDate, dueDateStart, dueDateEnd, lastUpdatedStartDate, lastUpdatedEndDate, status, attributeOptionCombo,
-            idSchemes, page, pageSize, totalPages, skipPaging, null, getGridOrderParams( order ), false, eventIds, filter,
-            dataElement, includeAllDataElements, includeDeleted );
+            orgUnit, ouMode, trackedEntityInstance, startDate, endDate, dueDateStart, dueDateEnd, lastUpdatedStartDate, lastUpdatedEndDate, status, 
+            categoryOptionCombo, attributeOptionCombo, idSchemes, page, pageSize, totalPages, skipPaging, null, getGridOrderParams( order ), 
+            false, eventIds, filter, dataElement, includeAllDataElements, includeDeleted );
 
         contextUtils.configureResponse( response, ContextUtils.CONTENT_TYPE_CSV, CacheStrategy.NO_CACHE );
         Grid grid = eventService.getEventsGrid( params );
@@ -487,6 +523,7 @@ public class EventController
         @RequestParam( required = false ) Date lastUpdatedStartDate,
         @RequestParam( required = false ) Date lastUpdatedEndDate,
         @RequestParam( required = false ) EventStatus status,
+        @RequestParam( required = false ) String coc,
         @RequestParam( required = false ) String attributeCc,
         @RequestParam( required = false ) String attributeCos,
         @RequestParam( required = false ) boolean skipMeta,
@@ -513,6 +550,13 @@ public class EventController
         }
 
         CategoryOptionCombo attributeOptionCombo = inputUtils.getAttributeOptionCombo( attributeCc, attributeCos, true );
+        
+        CategoryOptionCombo categoryOptionCombo = null;
+        
+        if ( coc != null )
+        {
+        	categoryOptionCombo = categoryService.getCategoryOptionCombo( coc );
+        }
 
         Set<String> eventIds = TextUtils.splitToArray( event, TextUtils.SEMICOLON );
         
@@ -523,7 +567,7 @@ public class EventController
         skipPaging = PagerUtils.isSkipPaging( skipPaging, paging );
 
         EventSearchParams params = eventService.getFromUrl( program, programStage, programStatus, followUp,
-            orgUnit, ouMode, trackedEntityInstance, startDate, endDate, dueDateStart, dueDateEnd, lastUpdatedStartDate, lastUpdatedEndDate, status, attributeOptionCombo,
+            orgUnit, ouMode, trackedEntityInstance, startDate, endDate, dueDateStart, dueDateEnd, lastUpdatedStartDate, lastUpdatedEndDate, status, categoryOptionCombo, attributeOptionCombo,
             idSchemes, page, pageSize, totalPages, skipPaging, getOrderParams( order ), getGridOrderParams( order, dataElementOrders ), false, eventIds, filter, dataElementOrders.keySet(), false,
             includeDeleted );
 
@@ -578,6 +622,7 @@ public class EventController
         @RequestParam( required = false ) Date lastUpdatedStartDate,
         @RequestParam( required = false ) Date lastUpdatedEndDate,
         @RequestParam( required = false ) EventStatus status,
+        @RequestParam( required = false ) String coc,
         @RequestParam( required = false ) String attributeCc,
         @RequestParam( required = false ) String attributeCos,
         @RequestParam( required = false ) Integer page,
@@ -595,6 +640,13 @@ public class EventController
     {
 
         CategoryOptionCombo attributeOptionCombo = inputUtils.getAttributeOptionCombo( attributeCc, attributeCos, true );
+        
+        CategoryOptionCombo categoryOptionCombo = null;
+        
+        if ( coc != null )
+        {
+        	categoryOptionCombo = categoryService.getCategoryOptionCombo( coc );
+        }
 
         Set<String> eventIds = TextUtils.splitToArray( event, TextUtils.SEMICOLON );
         
@@ -607,7 +659,7 @@ public class EventController
         skipPaging = PagerUtils.isSkipPaging( skipPaging, paging );
 
         EventSearchParams params = eventService.getFromUrl( program, programStage, programStatus, followUp,
-            orgUnit, ouMode, trackedEntityInstance, startDate, endDate, dueDateStart, dueDateEnd, lastUpdatedStartDate, lastUpdatedEndDate, status, attributeOptionCombo,
+            orgUnit, ouMode, trackedEntityInstance, startDate, endDate, dueDateStart, dueDateEnd, lastUpdatedStartDate, lastUpdatedEndDate, status, categoryOptionCombo, attributeOptionCombo,
             idSchemes, page, pageSize, totalPages, skipPaging, schemaOrders, getGridOrderParams( order, dataElementOrders ), false, eventIds, filter, dataElementOrders.keySet(), false,
             includeDeleted );
 
@@ -655,7 +707,7 @@ public class EventController
         skipPaging = PagerUtils.isSkipPaging( skipPaging, paging );
 
         EventSearchParams params = eventService.getFromUrl( program, null, programStatus, null,
-            orgUnit, ouMode, null, startDate, endDate, null, null, null, null, eventStatus, attributeOptionCombo,
+            orgUnit, ouMode, null, startDate, endDate, null, null, null, null, eventStatus, null, attributeOptionCombo,
             null, null, null, totalPages, skipPaging, getOrderParams( order ), null, true, null, null, null, false,
             includeDeleted );
 

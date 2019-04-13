@@ -114,8 +114,8 @@ public class JdbcEventStore
         .put( "eventDate", "psi_executiondate" ).put( "followup", "pi_followup" ).put( "status", "psi_status" )
         .put( "dueDate", "psi_duedate" ).put( "storedBy", "psi_storedby" ).put( "created", "psi_created" )
         .put( "lastUpdated", "psi_lastupdated" ).put( "completedBy", "psi_completedby" )
-        .put( "attributeOptionCombo", "psi_aoc" ).put( "completedDate", "psi_completeddate" )
-        .put( "deleted", "psi_deleted" ).build();
+        .put( "categoryOptionCombo", "psi_coc").put( "attributeOptionCombo", "psi_aoc" )
+        .put( "completedDate", "psi_completeddate" ).put( "deleted", "psi_deleted" ).build();
 
     // -------------------------------------------------------------------------
     // Dependencies
@@ -210,7 +210,8 @@ public class JdbcEventStore
                     event.setOptionSize( rowSet.getInt( "option_size" ) );
                 }
 
-                event.setAttributeOptionCombo( rowSet.getString( "coc_categoryoptioncombouid" ) );
+                event.setCategoryOptionCombo( rowSet.getString( "coc_categoryoptioncombouid" ) );
+                event.setAttributeOptionCombo( rowSet.getString( "aoc_categoryoptioncombouid" ) );
                 event.setAttributeCategoryOptions( rowSet.getString( "deco_uid" ) );
                 event.setTrackedEntityInstance( rowSet.getString( "tei_uid" ) );
 
@@ -599,7 +600,8 @@ public class JdbcEventStore
             + "psi.duedate as psi_duedate, psi.completedby as psi_completedby, psi.storedby as psi_storedby, "
             + "psi.created as psi_created, psi.lastupdated as psi_lastupdated, psi.completeddate as psi_completeddate, psi.deleted as psi_deleted, "
             + "ST_AsText( psi.geometry ) as psi_geometry, "
-            + "coc.categoryoptioncomboid AS coc_categoryoptioncomboid, coc.code AS coc_categoryoptioncombocode, coc.uid AS coc_categoryoptioncombouid, cocco.categoryoptionid AS cocco_categoryoptionid, deco.uid AS deco_uid, ";
+            + "coc.categoryoptioncomboid as coc_categoryoptioncomboid, coc.uid as coc_categoryoptioncombouid, "
+            + "aoc.categoryoptioncomboid as aoc_categoryoptioncomboid, aoc.code as aoc_categoryoptioncombocode, aoc.uid AS aoc_categoryoptioncombouid, cocco.categoryoptionid AS cocco_categoryoptionid, deco.uid AS deco_uid, ";
 
         if ( (params.getCategoryOptionCombo() == null || params.getCategoryOptionCombo().isDefault()) && !isSuper( user ) )
         {
@@ -625,7 +627,8 @@ public class JdbcEventStore
             + "inner join programinstance pi on pi.programinstanceid=psi.programinstanceid "
             + "inner join program p on p.programid=pi.programid "
             + "inner join programstage ps on ps.programstageid=psi.programstageid "
-            + "inner join categoryoptioncombo coc on coc.categoryoptioncomboid=psi.attributeoptioncomboid "
+            + "inner join categoryoptioncombo coc on coc.categoryoptioncomboid=psi.categoryoptioncomboid "
+            + "inner join categoryoptioncombo aoc on aoc.categoryoptioncomboid=psi.attributeoptioncomboid "
             + "inner join categoryoptioncombos_categoryoptions cocco on psi.attributeoptioncomboid=cocco.categoryoptioncomboid "
             + "inner join dataelementcategoryoption deco on cocco.categoryoptionid=deco.categoryoptionid "
             + "left join trackedentityinstance tei on tei.trackedentityinstanceid=pi.trackedentityinstanceid "
@@ -731,7 +734,12 @@ public class JdbcEventStore
 
         if ( params.getCategoryOptionCombo() != null )
         {
-            sql += hlp.whereAnd() + " psi.attributeoptioncomboid = " + params.getCategoryOptionCombo().getId() + " ";
+            sql += hlp.whereAnd() + " psi.categoryoptioncomboid = " + params.getCategoryOptionCombo().getId() + " ";
+        }
+        
+        if ( params.getCategoryOptionCombo() != null )
+        {
+            sql += hlp.whereAnd() + " psi.attributeoptioncomboid = " + params.getAttributeOptionCombo().getId() + " ";
         }
 
         if ( orgUnitIds != null && !orgUnitIds.isEmpty() )
