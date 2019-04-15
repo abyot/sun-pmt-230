@@ -1092,7 +1092,7 @@ public abstract class AbstractEventService
         params.setLastUpdatedEndDate( lastUpdatedEndDate );
         params.setEventStatus( status );
         params.setCategoryOptionCombo( categoryOptionCombo );
-        params.setCategoryOptionCombo( attributeOptionCombo );
+        params.setAttributeOptionCombo( attributeOptionCombo );
         params.setIdSchemes( idSchemes );
         params.setPage( page );
         params.setPageSize( pageSize );

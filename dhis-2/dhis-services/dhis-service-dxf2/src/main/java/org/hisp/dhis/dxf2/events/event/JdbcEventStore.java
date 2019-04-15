@@ -683,7 +683,7 @@ public class JdbcEventStore
             }
         }
 
-        if ( (params.getCategoryOptionCombo() == null || params.getCategoryOptionCombo().isDefault()) && !isSuper( user ) )
+        if ( (params.getAttributeOptionCombo() == null || params.getAttributeOptionCombo().isDefault()) && !isSuper( user ) )
         {
             sql += getCategoryOptionSharingForUser( user );
         }
@@ -732,14 +732,14 @@ public class JdbcEventStore
             sql += hlp.whereAnd() + " psi.lastupdated >= '" + skipChangedBefore + "' ";
         }
 
-        if ( params.getCategoryOptionCombo() != null )
+        if ( params.getAttributeOptionCombo() != null )
         {
-            sql += hlp.whereAnd() + " psi.categoryoptioncomboid = " + params.getCategoryOptionCombo().getId() + " ";
+            sql += hlp.whereAnd() + " psi.attributeoptioncomboid = " + params.getAttributeOptionCombo().getId() + " ";
         }
         
         if ( params.getCategoryOptionCombo() != null )
         {
-            sql += hlp.whereAnd() + " psi.attributeoptioncomboid = " + params.getAttributeOptionCombo().getId() + " ";
+            sql += hlp.whereAnd() + " psi.categoryoptioncomboid = " + params.getCategoryOptionCombo().getId() + " ";
         }
 
         if ( orgUnitIds != null && !orgUnitIds.isEmpty() )
