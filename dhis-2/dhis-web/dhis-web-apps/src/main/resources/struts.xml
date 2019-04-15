@@ -12,5 +12,11 @@
         </action>
     </package>
 
+    <package name="dhis-web-action-mapping" extends="dhis-web-commons" namespace="/dhis-web-action-mapping">
+        <action name="index" class="org.hisp.dhis.commons.action.NoAction">
+            <result name="success" type="redirect">index.html</result>
+        </action>
+    </package>
+
     <!-- INJECT BUNDLED APPS HERE -->
 </struts>
