@@ -13,7 +13,7 @@ sunPMT.controller('GeoCoverageController',
                 DialogService,
                 PeriodService,
                 MetaDataFactory,
-                ActionMappingUtils,
+                CommonUtils,
                 OptionComboService,
                 ReportService) {
     $scope.periodOffset = 0;
@@ -41,7 +41,7 @@ sunPMT.controller('GeoCoverageController',
         childrenIds: [],
         children: []};
     
-    $scope.model.stakeholderRoles = ActionMappingUtils.getStakeholderNames();
+    $scope.model.stakeholderRoles = CommonUtils.getStakeholderNames();
     
     function resetParams(){
         $scope.showReportFilters = true;
@@ -60,7 +60,7 @@ sunPMT.controller('GeoCoverageController',
         $scope.model.selectedRole = null;
         if( angular.isObject($scope.selectedOrgUnit)){            
             
-            ActionMappingUtils.getChildrenIds($scope.selectedOrgUnit).then(function(response){
+            CommonUtils.getChildrenIds($scope.selectedOrgUnit).then(function(response){
                 $scope.model.childrenIds = response.childrenIds;
                 $scope.model.children = response.children;
                 $scope.model.childrenByIds = response.childrenByIds;
@@ -95,7 +95,7 @@ sunPMT.controller('GeoCoverageController',
                     angular.forEach(ouLevels, function(ol){
                         $scope.model.ouLevels[ol.level] = ol.displayName;
                     });                    
-                    var res = ActionMappingUtils.populateOuLevels($scope.selectedOrgUnit, $scope.model.ouLevels);
+                    var res = CommonUtils.populateOuLevels($scope.selectedOrgUnit, $scope.model.ouLevels);
                     $scope.model.ouModes = res.ouModes;
                     $scope.model.selectedOuMode = res.selectedOuMode;
                     
@@ -119,7 +119,7 @@ sunPMT.controller('GeoCoverageController',
                         angular.forEach($scope.model.dataSets, function(ds){
                             if( ds.dataElements && ds.dataElements[0] && ds.dataElements[0].code ){
                                 $scope.model.dataElementsByCode[ds.dataElements[0].code] = ds.dataElements[0];
-                                var res = ActionMappingUtils.getStakeholderCategoryFromDataSet(ds, $scope.model.categoryCombos, $scope.model.stakeholderCategories, $scope.model.pushedCategoryIds);
+                                var res = CommonUtils.getStakeholderCategoryFromDataSet(ds, $scope.model.categoryCombos, $scope.model.stakeholderCategories, $scope.model.pushedCategoryIds);
                                 $scope.model.stakeholderCategories = res.categories;
                                 $scope.model.pushedCategoryIds = res.categoryIds;
                             }
@@ -254,12 +254,12 @@ sunPMT.controller('GeoCoverageController',
             $scope.showReportFilters = response.showReportFilters;
             $scope.noDataExists = response.noDataExists;
             $scope.reportStarted = response.reportStarted;            
-            $scope.requiredCols = ActionMappingUtils.getRequiredCols($scope.model.availableRoles, $scope.model.selectedRole);
+            $scope.requiredCols = CommonUtils.getRequiredCols($scope.model.availableRoles, $scope.model.selectedRole);
         });        
     };
     
     $scope.getRequiredCols = function(){        
-        return ActionMappingUtils.getRequiredCols($scope.model.availableRoles, $scope.model.selectedRole);
+        return CommonUtils.getRequiredCols($scope.model.availableRoles, $scope.model.selectedRole);
     };
     
     $scope.valueExists = function(ou, de, oc){
@@ -352,7 +352,7 @@ sunPMT.controller('GeoCoverageController',
                 
         totalChildren = totalChildren === 0 ? 1 : totalChildren;
         
-        return value === 0 ? "" : value + " (" + ActionMappingUtils.getPercent( value, totalChildren) + ")";
+        return value === 0 ? "" : value + " (" + CommonUtils.getPercent( value, totalChildren) + ")";
     };
     
     $scope.exportData = function () {
@@ -360,7 +360,7 @@ sunPMT.controller('GeoCoverageController',
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8"
         });
         
-        var reportName = ActionMappingUtils.getReportName($translate.instant('geo_coverage_per_sh'), 
+        var reportName = CommonUtils.getReportName($translate.instant('geo_coverage_per_sh'), 
                                         $scope.model.selectedRole,
                                         $scope.selectedOrgUnit.n,
                                         $scope.model.selectedOuMode,

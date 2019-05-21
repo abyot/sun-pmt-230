@@ -7,6 +7,10 @@ html, body {
     font-size: 100% !important;
 }
 
+#mainPage {
+    margin: 70px 5px 5px 310px;
+}
+
 .not-for-screen {
     display: none;
 }
@@ -251,8 +255,10 @@ input[type=date]::-webkit-inner-spin-button, input[type=date]::-webkit-outer-spi
     margin-top: 15px;
 }
 
-div#leftBar {
-    width: 236px;
+div#leftBar {    
+    width: 300px;    
+    height: 100%;
+    overflow-y: scroll !important;
 }
 
 .pull-center {
@@ -383,7 +389,7 @@ select {
 }
 
 div#orgUnitTree {
-    height: 50%;
+    width: 290px !important;
     border: 1px solid #e3e3e3;
 }
 
@@ -866,4 +872,45 @@ div#orgUnitTree {
 
 .empty-data-row {
     color: #767676 !important;
+}
+
+.thumbnail {
+    display: inline-block;
+    display: block;
+    height: auto;
+    max-width: 100%;
+    padding: 4px;
+    margin: 0 !important;
+    line-height: 1.428571429;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 4px;
+    -webkit-transition: all .2s ease-in-out;
+    transition: all .2s ease-in-out;
+}
+
+.greenInfoArea {
+    border: 1px solid #a4d2a3;
+    background-color: #d0eBd0;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+}
+
+.blueInfoArea {
+    border: 1px solid #729fcf;
+    background-color: #BBD1EE;
+    padding: 10px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+}
+
+.yellowInfoArea {
+    border: 1px solid #ad892e;
+    background-color: #faebc4;/*#F4CD6C;*/
+    padding: 10px;
+    border-radius: 3px;
+    margin-right: -30px;
+    margin-top: 10px;
 }

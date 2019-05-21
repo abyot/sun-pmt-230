@@ -263,7 +263,7 @@ var d2Services = angular.module('d2Services', ['ngResource'])
 })
 
 /* service for common utils */
-.service('CommonUtils', function(SessionStorageService, DateUtils, OptionSetService, CurrentSelection, FileService){
+.service('CommonUtils', function($q, $translate, $filter, SessionStorageService, DateUtils, OptionSetService, CurrentSelection, FileService, DialogService, OrgUnitService){
 
     return {
         formatDataValue: function(event, val, obj, optionSets, destination){
@@ -361,7 +361,370 @@ var d2Services = angular.module('d2Services', ['ngResource'])
                 }
             }
             return false;
-        }        
+        },
+        getSum: function( op1, op2 ){
+            op1 = dhis2.validation.isNumber(op1) ? parseInt(op1) : 0;
+            op2 = dhis2.validation.isNumber(op2) ? parseInt(op2) : 0;        
+            return op1 + op2;
+        },
+        getPercent: function(op1, op2){        
+            op1 = dhis2.validation.isNumber(op1) ? parseInt(op1) : 0;
+            op2 = dhis2.validation.isNumber(op2) ? parseInt(op2) : 0;        
+            if( op1 === 0){
+                return "";
+            }
+            if( op2 === 0 ){
+                return $translate.instant('missing_target');
+            }
+            return parseFloat((op1 / op2)*100).toFixed(2) + '%';
+        },
+        getRoleHeaders: function(){
+            var headers = [];            
+            headers.push({id: 'catalyst', displayName: $translate.instant('catalyst')});
+            headers.push({id: 'funder', displayName: $translate.instant('funder')});
+            headers.push({id: 'responsibleMinistry', displayName: $translate.instant('responsible_ministry')});
+            
+            return headers;
+        },
+        getOptionComboIdFromOptionNames: function(optionComboMap, options){
+            
+            var optionNames = [];
+            angular.forEach(options, function(op){
+                optionNames.push(op.displayName);
+            });
+            
+            var selectedAttributeOcboName = optionNames.toString();
+            //selectedAttributeOcboName = selectedAttributeOcboName.replace(/\,/g, ', ');
+            var selectedAttributeOcobo = optionComboMap['"' + selectedAttributeOcboName + '"'];
+            
+            if( !selectedAttributeOcobo || angular.isUndefined( selectedAttributeOcobo ) ){
+                selectedAttributeOcboName = optionNames.reverse().toString();
+                //selectedAttributeOcboName = selectedAttributeOcboName.replace(",", ", ");
+                selectedAttributeOcobo = optionComboMap['"' + selectedAttributeOcboName + '"'];
+            }
+            
+            return selectedAttributeOcobo;
+        },
+        splitRoles: function( roles ){
+            return roles.split(","); 
+        },
+        pushRoles: function(existingRoles, roles){
+            var newRoles = roles.split(",");
+            angular.forEach(newRoles, function(r){
+                if( existingRoles.indexOf(r) === -1 ){
+                    existingRoles.push(r);
+                }
+            });            
+            return existingRoles;
+        },
+        getOptionIds: function(options){            
+            var optionNames = '';
+            angular.forEach(options, function(o){
+                optionNames += o.id + ';';
+            });            
+            
+            return optionNames.slice(0,-1);
+        },
+        errorNotifier: function(response){
+            if( response && response.data && response.data.status === 'ERROR'){
+                var dialogOptions = {
+                    headerText: response.data.status,
+                    bodyText: response.data.message ? response.data.message : $translate.instant('unable_to_fetch_data_from_server')
+                };		
+                DialogService.showDialog({}, dialogOptions);
+            }
+        },
+        getNumeratorAndDenominatorIds: function( ind ){
+            var expressionRegx = /[#\{\}]/g;
+            var num = ind.numerator.replace(expressionRegx, '');
+            var den = ind.denominator.replace(expressionRegx, '');
+            
+            if( num.indexOf('.') === -1 ){
+                num = num + '.HllvX50cXC0';                
+            }
+            num = num.split('.');
+            
+            if( den.indexOf('.') === -1 ){
+                den = den + '.HllvX50cXC0';                
+            }
+            den = den.split('.');            
+            return {numerator: num[0], numeratorOptionCombo: num[1], denominator: den[0], denominatorOptionCombo: den[1]};
+        },
+        getStakeholderCategoryFromDataSet: function(dataSet, availableCombos, existingCategories, categoryIds){
+            if( dataSet.categoryCombo && dataSet.categoryCombo.id){
+                var cc = availableCombos[dataSet.categoryCombo.id];
+                if( cc && cc.categories ){
+                    angular.forEach(cc.categories, function(c){
+                        if( c.code === 'FI' && categoryIds.indexOf( c.id )){
+                            existingCategories.push( c );
+                            categoryIds.push( c.id );
+                        }
+                    });
+                }
+            }
+            return {categories: existingCategories, categoryIds: categoryIds};
+        },
+        getDMCategoryFromDataSet: function(dataSet, availableCombos, existingCategories, categoryIds){
+            if( dataSet.categoryCombo && dataSet.categoryCombo.id){
+                var cc = availableCombos[dataSet.categoryCombo.id];
+                if( cc && cc.categories ){
+                    angular.forEach(cc.categories, function(c){
+                        if( c.code === 'DM' && categoryIds.indexOf( c.id )){
+                            existingCategories.push( c );
+                            categoryIds.push( c.id );
+                        }
+                    });
+                }
+            }
+            return {categories: existingCategories, categoryIds: categoryIds};
+        },
+        getRequiredCols: function(availableRoles, selectedRole){
+            var cols = [];
+            for (var k in availableRoles[selectedRole.id]){
+                if ( availableRoles[selectedRole.id].hasOwnProperty(k) ) {
+                    angular.forEach(availableRoles[selectedRole.id][k], function(c){
+                        c = c.trim();
+                        if( cols.indexOf( c ) === -1 ){
+                            c = c.trim();
+                            if( selectedRole.domain === 'CA' ){
+                                if( selectedRole.categoryOptions && selectedRole.categoryOptions.indexOf( c ) !== -1){
+                                    cols.push( c );
+                                }
+                            }
+                            else{
+                                cols.push( c );
+                            }                        
+                        }
+                    });                
+                }
+            }
+            return cols.sort();
+        },
+        populateOuLevels: function( orgUnit, ouLevels ){
+            var ouModes = [{displayName: $translate.instant('selected_level') , value: 'SELECTED', level: orgUnit.l}];
+            var limit = orgUnit.l === 1 ? 2 : 3;
+            for( var i=orgUnit.l+1; i<=limit; i++ ){
+                var lvl = ouLevels[i];
+                ouModes.push({value: lvl, displayName: lvl, level: i});
+            }
+            var selectedOuMode = ouModes[0];            
+            return {ouModes: ouModes, selectedOuMode: selectedOuMode};
+        },
+        getChildrenIds: function( orgUnit ){
+            var def = $q.defer();
+            OrgUnitService.get( orgUnit.id ).then(function( json ){
+                var childrenIds = [];
+                var children = json.organisationUnits;
+                var childrenByIds = [];
+                var allChildren = [];
+                angular.forEach(children, function(c){
+                    c.path = c.path.substring(1, c.path.length);
+                    c.path = c.path.split("/");
+                    childrenByIds[c.id] = c;
+                    if( c.level <= 3 ){
+                        allChildren.push( c );
+                    }
+                });                    
+                
+                if( orgUnit.l === 1 ){
+                    angular.forEach($filter('filter')(children, {level: 3}), function(c){
+                        childrenIds.push(c.id);                        
+                    });
+                }
+                else if ( orgUnit.l === 2 ){
+                    childrenIds = orgUnit.c;
+                }
+                else {
+                    childrenIds = [orgUnit.id];
+                }
+
+                def.resolve( {childrenIds: childrenIds, allChildren: allChildren, children: $filter('filter')(children, {parent: {id: orgUnit.id}}), descendants: $filter('filter')(children, {level: 3}), childrenByIds: childrenByIds } );
+            });
+            
+            return def.promise;
+        },
+        processDataSet: function( ds ){
+            var dataElements = [];
+            angular.forEach(ds.dataSetElements, function(dse){
+                if( dse.dataElement ){
+                    dataElements.push( dhis2.metadata.processMetaDataAttribute( dse.dataElement ) );
+                }                            
+            });
+            ds.dataElements = dataElements;
+            delete ds.dataSetElements;
+            
+            return ds;
+        },
+        getReportName: function(reportType, reportRole, ouName, ouLevel, peName){
+            var reportName = ouName;
+            if( ouLevel && ouLevel.value && ouLevel.value !== 'SELECTED' ){
+                reportName += ' (' + ouLevel.displayName + ') ';
+            }
+            
+            reportName += ' - ' + reportType;
+            
+            if( reportRole && reportRole.displayNme ){
+                reportName += ' (' + reportRole.displayName + ')'; 
+            }
+            
+            reportName += ' - ' + peName + '.xls';
+            return reportName;
+        },
+        getStakeholderNames: function(){
+            var stakeholders = [{id: 'CA_ID', displayName: $translate.instant('catalyst')},{id: 'FU_ID', displayName: $translate.instant('funder')},{id: 'RM_ID', displayName: $translate.instant('responsible_ministry')}];
+            return stakeholders;
+        },
+        getDataElementTotal: function(dataValues, dataElement){            
+            if( dataValues[dataElement] ){
+                dataValues[dataElement].total = 0;
+                angular.forEach(dataValues[dataElement], function(val, key){
+                    if( key !== 'total' && val && val.value && dhis2.validation.isNumber( val.value ) ){                        
+                        dataValues[dataElement].total += parseInt( val.value );
+                    }
+                });
+            }            
+            return dataValues[dataElement];
+        },
+        getIndicatorResult: function( ind, dataValues ){
+            var denVal = 1, numVal = 0;
+            
+            if( ind.numerator ) {
+                
+                ind.numExpression = angular.copy( ind.numerator );
+                var matcher = ind.numExpression.match( dhis2.metadata.formulaRegex );
+                
+                for ( var k in matcher )
+                {
+                    var match = matcher[k];
+
+                    // Remove brackets from expression to simplify extraction of identifiers
+
+                    var operand = match.replace( dhis2.metadata.operatorRegex, '' );
+
+                    var isTotal = !!( operand.indexOf( dhis2.metadata.custSeparator ) == -1 );
+
+                    var value = '0';
+
+                    if ( isTotal )
+                    {
+                        if( dataValues && dataValues[operand] && dataValues[operand].total ){
+                            value = dataValues[operand].total;
+                        }
+                    }
+                    else
+                    {
+                        var de = operand.substring( 0, operand.indexOf( dhis2.metadata.custSeparator ) );
+                        var coc = operand.substring( operand.indexOf( dhis2.metadata.custSeparator ) + 1, operand.length );
+                        
+                        if( dataValues && 
+                                dataValues[de] && 
+                                dataValues[de][coc] &&
+                                dataValues[de][coc].value){
+                            value = dataValues[de][coc].value;
+                        }
+                    }
+                    ind.numExpression = ind.numExpression.replace( match, value );                    
+                }
+            }
+            
+            
+            if( ind.denominator ) {
+                
+                ind.denExpression = angular.copy( ind.denominator );
+                var matcher = ind.denExpression.match( dhis2.metadata.formulaRegex );
+                
+                for ( var k in matcher )
+                {
+                    var match = matcher[k];
+
+                    // Remove brackets from expression to simplify extraction of identifiers
+
+                    var operand = match.replace( dhis2.metadata.operatorRegex, '' );
+
+                    var isTotal = !!( operand.indexOf( dhis2.metadata.custSeparator ) == -1 );
+
+                    var value = '0';
+
+                    if ( isTotal )
+                    {
+                        if( dataValues[operand] && dataValues[operand].total ){
+                            value = dataValues[operand].total;
+                        }
+                    }
+                    else
+                    {
+                        var de = operand.substring( 0, operand.indexOf( dhis2.metadata.custSeparator ) );
+                        var coc = operand.substring( operand.indexOf( dhis2.metadata.custSeparator ) + 1, operand.length );
+                        
+                        if( dataValues && 
+                                dataValues[de] && 
+                                dataValues[de][coc] &&
+                                dataValues[de][coc].value){
+                            value = dataValues[de][coc].value;
+                        }
+                    }
+                    ind.denExpression = ind.denExpression.replace( match, value );
+                }
+            }
+            
+            if( ind.numExpression ){
+                numVal = eval( ind.numExpression );
+                numVal = isNaN( numVal ) ? '-' : roundTo( numVal, 1 );
+            }
+            
+            if( ind.denExpression ){
+                denVal = eval( ind.denExpression );
+                denVal = isNaN( denVal ) ? '-' : roundTo( denVal, 1 );
+            }
+            
+            var factor = 1;
+            
+            /*if( ind.indicatorType && ind.indicatorType.factor ){
+                factor = ind.indicatorType.factor;
+            }*/
+            
+            return (numVal / denVal)*factor;
+        },
+        getIcons: function(){
+            var icons = [];
+            
+            icons.push({
+                href: 'http://www.reachpartnership.org/documents/312104/647fc812-274b-4028-a36e-bf78a4e7c008',
+                src: 'images/food_agriculture_and_healthy_diets.jpg',
+                alt: 'food_agriculture_and_healthy_diets',
+                cls: 'can-1-container'
+            });
+            
+            icons.push({
+                href: 'http://www.reachpartnership.org/documents/312104/b58a5c8e-4989-4f1a-81fb-57ae850abd63',
+                src: 'images/maternal_and_child_care.jpg',
+                alt: 'maternal_and_child_care',
+                cls: 'can-2-container'
+            });
+            
+            icons.push({
+                href: 'http://www.reachpartnership.org/documents/312104/0c8e3dfd-a1f2-4678-a340-0050ef54290d',
+                src: 'images/health.jpg',
+                alt: 'health',
+                cls: 'can-3-container'
+            });
+            
+            icons.push({
+                href: 'http://www.reachpartnership.org/documents/312104/8df9b5e7-1452-4e40-ae83-b8b4e6cc9e23',
+                src: 'images/social_protection.jpg',
+                alt: 'social_protection',
+                cls: 'can-4-container'
+            });
+            
+            icons.push({
+                href: 'http://www.reachpartnership.org/documents/312104/7ce1820e-cdbd-42ad-84a8-24872d8db2cd',
+                src: 'images/facilitation_of_multisectoral_nutrition_governance.jpg',
+                alt: 'facilitation_of_multisectoral_nutrition_governance',
+                cls: 'can-5-container'
+            });
+            
+            return icons;
+        }
     };
 })
 

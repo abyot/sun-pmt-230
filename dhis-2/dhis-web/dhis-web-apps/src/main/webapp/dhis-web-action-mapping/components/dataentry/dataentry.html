@@ -6,11 +6,10 @@
 
     <d2-left-bar></d2-left-bar>
 
-    <div style="margin-top:20px">
-        <img id="searchIcon" src="../images/search.png" style="cursor: pointer" title="{{searchOusLabel}}">
-        <span id="searchSpan" style="width:100%;display:none;">
-            <input type="text" id="searchField" name="key"/>
-            <input type="button" value="{{findLabel}}" onclick="selection.findByName()"/>
+    <div class="input-group">
+        <input type="text" id="searchField" name="key" class="form-control" placeholder="{{'search' | translate}}">
+        <span class="input-group-btn">
+            <button class="btn btn-primary" type="button" onclick="selection.findByName()">{{'go' | translate}}</button>
         </span>
     </div>
 
@@ -25,6 +24,7 @@
         {{'loading_tree'| translate}}
     </div>
 
+    <d2-can-menu></d2-can-menu>
 </div>
 
 

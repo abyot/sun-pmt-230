@@ -29,6 +29,49 @@
 
 dhis2.util.namespace('dhis2.metadata');
 
+dhis2.metadata.custSeparator   = '.';
+dhis2.metadata.formulaRegex    = /#\{.+?\}/g;
+dhis2.metadata.expressionRegex = /#{.*?\}/g;
+dhis2.metadata.operatorRegex   = /[#\{\}]/g;
+
+dhis2.metadata.expressionMatcher = function( obj, src, des, expressionPattern, operandPattern, src2){
+    var match;    
+    if( src2 ){
+        if( obj[src] && obj[src][src2] && expressionPattern && operandPattern && obj[des]){
+            while (match = expressionPattern.exec( obj[src][src2] ) ) {                                
+                match[0] = match[0].replace( operandPattern, '' );                
+                obj[des].push(match[0].split('.')[0]);                                
+            }
+        }    
+    }
+    else{
+        if( obj[src] && expressionPattern && operandPattern && obj[des]){
+            while (match = expressionPattern.exec( obj[src] ) ) {                                
+                match[0] = match[0].replace( operandPattern, '' );
+                obj[des].push(match[0]);                                
+            }
+        }    
+    }
+    
+    return obj;
+};
+
+dhis2.metadata.cartesianProduct = function( arrays ){
+    
+    var i, j, l, m, a1, o = [];
+    if (!arrays || arrays.length == 0) return arrays;
+
+    a1 = arrays.splice(0,1);
+    arrays = dhis2.metadata.cartesianProduct( arrays );
+    for (i = 0, l = a1[0].length; i < l; i++) {
+        if (arrays && arrays.length) for (j = 0, m = arrays.length; j < m; j++)
+            o.push([a1[0][i]].concat(arrays[j]));
+        else
+            o.push([a1[0][i]]);
+    }
+    return o;
+};
+
 dhis2.metadata.chunk = function( array, size ){
 	if( !array || !array.length || !size || size < 1 ){
             return [];
@@ -76,6 +119,7 @@ dhis2.metadata.getMetaObjectIds = function( objNames, url, filter )
 {
     var def = $.Deferred();
     var objs = [];
+    var url = encodeURI( url );
     $.ajax({
         url: url,
         type: 'GET',
@@ -192,50 +236,86 @@ dhis2.metadata.getMetaObjects = function( store, objs, url, filter, storage, db,
 {
     var def = $.Deferred();
 
+    var url = encodeURI( url );
+    
     $.ajax({
         url: url,
         type: 'GET',
         data: filter
     }).done(function(response) {
-        if(response[objs]){            
+        if(response[objs]){
+            var count = 0;
             _.each( _.values( response[objs] ), function ( obj ) {        
                 obj = dhis2.metadata.processMetaDataAttribute( obj );
                 if( func ) {
                     obj = func(obj, 'organisationUnits');
                 }                
-                if( store === 'categoryCombos' && obj.categoryOptionCombos ){                     
-                    if( obj.categoryOptionCombos && obj.categories ){
-                        
-                        var cats =JSON.parse( JSON.stringify( obj.categories ) );
-                        
-                        _.each( _.values( cats ), function( c ){
-                            if( c.categoryOptions ){
-                                c.categoryOptions = $.map(c.categoryOptions, function(o){return o.displayName;});
-                            }
-                        });
-                        
-                        _.each( _.values( obj.categoryOptionCombos ), function ( coc ) {                            
-                            if( coc.categoryOptions ){
-                                var opts = [];
-                                var _opts = $.map(coc.categoryOptions, function(o){return o.displayName;});
-                                for( var i=0; i<cats.length; i++ ){                                    
-                                    if( cats[i].categoryOptions && cats[i].categoryOptions.length ){                                        
-                                        for(var j=0; j<cats[i].categoryOptions.length; j++){
-                                            if( _opts.indexOf( cats[i].categoryOptions[j] ) !== -1 ){                                                
-                                                opts.push( cats[i].categoryOptions[j] );
-                                                break;
-                                            }
-                                        }
+                if( store === 'categoryCombos' ){
+                    
+                	if( obj.categories ){
+                        _.each( _.values( obj.categories ), function ( ca ) {                            
+                            if( ca.categoryOptions ){
+                                _.each( _.values( ca.categoryOptions ), function ( co ) {
+                                    co.mappedOrganisationUnits = [];
+                                    if( co.organisationUnits && co.organisationUnits.length > 0 ){                                        
+                                        co.mappedOrganisationUnits = $.map(co.organisationUnits, function(ou){return ou.id;});
                                     }
-                                }
-                                
-                                coc.displayName = opts && opts.length && opts.length > 0 ? opts.join() : coc.displayName.replace(", ", ",");
+                                    delete co.organisationUnits;
+                                });
                             }
-                            //delete coc.categoryOptions;
                         });
                     }
+                	
+                    if( obj.categoryOptionCombos && obj.categories ){
+                        var categoryOptions = [];
+                        _.each( _.values( obj.categories ), function ( cat ) {                            
+                            if( cat.categoryOptions ){                                
+                                categoryOptions.push(  $.map(cat.categoryOptions, function(co){return co.displayName;}) );
+                            }                            
+                        });                        
+
+                        var cocs = dhis2.metadata.cartesianProduct( categoryOptions );                        
+                        
+                        var sortedOptionCombos = [];
+                        _.each( _.values( cocs ), function ( coc ) {                        
+                            for( var i=0; i<obj.categoryOptionCombos.length; i++){                            
+                                var opts = obj.categoryOptionCombos[i].displayName.split(', ');                                
+                                var itsc = _.intersection(opts, coc);
+                                if( itsc.length === opts.length && itsc.length === coc.length ){
+                                    sortedOptionCombos.push({id: obj.categoryOptionCombos[i].id, displayName: coc.join(', ')} );
+                                    break;
+                                }
+                            }
+                        });
+                        obj.categoryOptionCombos = sortedOptionCombos;
+                        /*if( obj.categoryOptionCombos.length !== sortedOptionCombos.length ){
+                            console.log(obj.displayName, ' - ', obj.categoryOptionCombos.length, ' - ', sortedOptionCombos.length);
+                        }
+                        else{
+                            obj.categoryOptionCombos = sortedOptionCombos;
+                        }*/
+                    }                    
                 }
                 else if( store === 'dataSets' ){
+                    
+                    if( obj.sections ){
+                        _.each(obj.sections, function(sec){                
+                            if( sec.indicators ){
+                                angular.forEach(sec.indicators, function(ind){
+                                    ind=dhis2.metadata.processMetaDataAttribute(ind);
+                                    ind.params=[];
+                                    ind=dhis2.metadata.expressionMatcher(ind,'numerator','params',dhis2.metadata.expressionRegex,dhis2.metadata.operatorRegex);
+                                    ind=dhis2.metadata.expressionMatcher(ind,'denominator','params',dhis2.metadata.expressionRegex,dhis2.metadata.operatorRegex);
+                                });
+                            }
+                            if( sec.greyedFields ){
+                                var greyedFields = [];
+                                greyedFields = $.map(sec.greyedFields, function(gf){return gf.dimensionItem;});
+                                sec.greyedFields = greyedFields;
+                            }
+                        });
+                    }
+                    
                     var dataElements = [];
                     _.each(obj.dataSetElements, function(dse){
                         if( dse.dataElement ){
@@ -245,6 +325,15 @@ dhis2.metadata.getMetaObjects = function( store, objs, url, filter, storage, db,
                     obj.dataElements = dataElements;
                     delete obj.dataSetElements;                    
                 }
+                else if( store === 'validationRules' ){
+                    obj.params = [];
+                    obj = dhis2.metadata.expressionMatcher(obj, 'leftSide', 'params',dhis2.metadata.expressionRegex, dhis2.metadata.operatorRegex, 'expression');
+                    obj = dhis2.metadata.expressionMatcher(obj, 'rightSide', 'params',dhis2.metadata.expressionRegex, dhis2.metadata.operatorRegex, 'expression');
+                }
+                else if( store === 'periodTypes' ){
+                    obj.id = count;
+                }
+                count++;
             });            
             
             if(storage === 'idb'){
@@ -279,7 +368,9 @@ dhis2.metadata.getMetaObject = function( id, store, url, filter, storage, db )
     if(id){
         url = url + '/' + id + '.json';
     }
-        
+     
+    var url = encodeURI( url );
+    
     $.ajax({
         url: url,
         type: 'GET',            
@@ -306,11 +397,18 @@ dhis2.metadata.getMetaObject = function( id, store, url, filter, storage, db )
     return def.promise();
 };
 
-dhis2.metadata.processObject = function(obj, prop){    
-    var oo = {};
-    _.each(_.values( obj[prop]), function(o){
-        oo[o.id] = o.name;
-    });
-    obj[prop] = oo;
+dhis2.metadata.processObject = function(obj, prop){
+	if( obj[prop] ){
+		var oo = {};
+	    _.each(_.values( obj[prop]), function(o){
+                if( o.name ){
+                    oo[o.id] = o.name;
+                }
+                else{
+                    oo[o.id] = o.id;
+                }
+	    });
+	    obj[prop] = oo;
+	}    
     return obj;
 };

@@ -14,7 +14,7 @@ sunPMT.controller('PopCoverageController',
                 PeriodService,
                 MetaDataFactory,
                 DataSetFactory,
-                ActionMappingUtils,
+                CommonUtils,
                 OptionComboService,
                 ReportService) {
     $scope.periodOffset = 0;
@@ -47,7 +47,7 @@ sunPMT.controller('PopCoverageController',
         childrenIds: [],
         children: []};
     
-    $scope.model.stakeholderRoles = ActionMappingUtils.getStakeholderNames();
+    $scope.model.stakeholderRoles = CommonUtils.getStakeholderNames();
     
     function resetParams(){
         $scope.showReportFilters = true;
@@ -67,7 +67,7 @@ sunPMT.controller('PopCoverageController',
         resetParams();
         if( angular.isObject($scope.selectedOrgUnit)){
             
-            ActionMappingUtils.getChildrenIds($scope.selectedOrgUnit).then(function(response){
+            CommonUtils.getChildrenIds($scope.selectedOrgUnit).then(function(response){
                 $scope.model.childrenIds = response.childrenIds;
                 $scope.model.children = response.children;
                 $scope.model.childrenByIds = response.childrenByIds;
@@ -102,7 +102,7 @@ sunPMT.controller('PopCoverageController',
                 angular.forEach(ouLevels, function(ol){
                     $scope.model.ouLevels[ol.level] = ol.displayName;
                 });                    
-                var res = ActionMappingUtils.populateOuLevels($scope.selectedOrgUnit, $scope.model.ouLevels);
+                var res = CommonUtils.populateOuLevels($scope.selectedOrgUnit, $scope.model.ouLevels);
                 $scope.model.ouModes = res.ouModes;
                 $scope.model.selectedOuMode = res.selectedOuMode;
                 
@@ -138,7 +138,7 @@ sunPMT.controller('PopCoverageController',
                                 if( ds.dataElements && ds.dataElements[0] && ds.dataElements[0].code ){
                                     $scope.model.dataElementsByCode[ds.dataElements[0].code] = ds.dataElements[0];
                                     $scope.model.dataSetsByDataElementId[ds.dataElements[0].id] = ds;
-                                    var res = ActionMappingUtils.getStakeholderCategoryFromDataSet(ds, $scope.model.categoryCombos, $scope.model.stakeholderCategories, $scope.model.pushedCategoryIds);
+                                    var res = CommonUtils.getStakeholderCategoryFromDataSet(ds, $scope.model.categoryCombos, $scope.model.stakeholderCategories, $scope.model.pushedCategoryIds);
                                     $scope.model.stakeholderCategories = res.categories;
                                     $scope.model.pushedCategoryIds = res.categoryIds;
                                 }
@@ -219,7 +219,7 @@ sunPMT.controller('PopCoverageController',
         $scope.model.selectedDataSets = [];
         $scope.model.selectedDataSets = $scope.model.selectedDataSets.concat( $scope.model.targetDataSets );
         angular.forEach($scope.model.selectedIndicators, function(ind){
-            ind = ActionMappingUtils.getNumeratorAndDenominatorIds( ind );
+            ind = CommonUtils.getNumeratorAndDenominatorIds( ind );
             if( $scope.model.dataSetsByDataElementId[ind.numerator] ){
                 $scope.model.selectedDataSets.push( $scope.model.dataSetsByDataElementId[ind.numerator] );
             }
@@ -290,11 +290,11 @@ sunPMT.controller('PopCoverageController',
     };
     
     $scope.getRequiredCols = function(){
-        return ActionMappingUtils.getRequiredCols($scope.model.availableRoles, $scope.model.selectedRole);
+        return CommonUtils.getRequiredCols($scope.model.availableRoles, $scope.model.selectedRole);
     };
     
     $scope.valueExists = function(ou, ind){        
-        ind = ActionMappingUtils.getNumeratorAndDenominatorIds( ind );
+        ind = CommonUtils.getNumeratorAndDenominatorIds( ind );
         var filteredNumerators = $filter('filter')($scope.model.mappedValues.dataValues, {dataElement: ind.numerator, categoryOptionCombo: ind.numeratorOptionCombo});
         var filteredDenominators = $filter('filter')($scope.model.mappedValues.dataValues, {dataElement: ind.denominator, categoryOptionCombo: ind.denominatorOptionCombo});
         
@@ -332,7 +332,7 @@ sunPMT.controller('PopCoverageController',
     };
     
     $scope.getValuePerRole = function( ou, col, ind ){        
-        ind = ActionMappingUtils.getNumeratorAndDenominatorIds( ind );
+        ind = CommonUtils.getNumeratorAndDenominatorIds( ind );
         var filteredNumerators = $filter('filter')($scope.model.mappedValues.dataValues, {dataElement: ind.numerator, categoryOptionCombo: ind.numeratorOptionCombo});
         var filteredDenominators = $filter('filter')($scope.model.mappedValues.dataValues, {dataElement: ind.denominator, categoryOptionCombo: ind.denominatorOptionCombo});
         
@@ -363,8 +363,8 @@ sunPMT.controller('PopCoverageController',
                             var curDen = $filter('filter')(filteredDenominators, {orgUnit: val.orgUnit});
                             
                             if( curDen && curDen.length && curDen[0] && curDen[0].value ){
-                                //denominator = ActionMappingUtils.getSum( denominator, curDen[0].value);
-                                numerator = ActionMappingUtils.getSum( numerator, val.value);
+                                //denominator = CommonUtils.getSum( denominator, curDen[0].value);
+                                numerator = CommonUtils.getSum( numerator, val.value);
                                 numValueCount++;
                             }
 
@@ -380,8 +380,8 @@ sunPMT.controller('PopCoverageController',
                         
                         var curDen = $filter('filter')(filteredDenominators, {orgUnit: val.orgUnit});
                         if( curDen && curDen.length && curDen[0] && curDen[0].value ){
-                            //denominator = ActionMappingUtils.getSum( denominator, curDen[0].value);
-                            numerator = ActionMappingUtils.getSum( numerator, val.value);
+                            //denominator = CommonUtils.getSum( denominator, curDen[0].value);
+                            numerator = CommonUtils.getSum( numerator, val.value);
                             numValueCount++;
                         }
 
@@ -412,8 +412,8 @@ sunPMT.controller('PopCoverageController',
                             var curDen = $filter('filter')(filteredDenominators, {orgUnit: val.orgUnit});
                             
                             if( curDen && curDen.length && curDen[0] && curDen[0].value ){
-                                denominator = ActionMappingUtils.getSum( denominator, curDen[0].value);
-                                //numerator = ActionMappingUtils.getSum( numerator, val.value);
+                                denominator = CommonUtils.getSum( denominator, curDen[0].value);
+                                //numerator = CommonUtils.getSum( numerator, val.value);
                                 denValueCount++;
                             }
 
@@ -429,8 +429,8 @@ sunPMT.controller('PopCoverageController',
                         
                         var curDen = $filter('filter')(filteredDenominators, {orgUnit: val.orgUnit});
                         if( curDen && curDen.length && curDen[0] && curDen[0].value ){
-                            denominator = ActionMappingUtils.getSum( denominator, curDen[0].value);
-                            //numerator = ActionMappingUtils.getSum( numerator, val.value);
+                            denominator = CommonUtils.getSum( denominator, curDen[0].value);
+                            //numerator = CommonUtils.getSum( numerator, val.value);
                             denValueCount++;
                         }
 
@@ -441,8 +441,8 @@ sunPMT.controller('PopCoverageController',
         });
         
         //return numerator + " / " + denominator;
-        //return valueCount > 0 ? ActionMappingUtils.getPercent(numerator, denominator) : "";
-        return ActionMappingUtils.getPercent(numerator, denominator);
+        //return valueCount > 0 ? CommonUtils.getPercent(numerator, denominator) : "";
+        return CommonUtils.getPercent(numerator, denominator);
     };
     
     $scope.exportData = function () {
@@ -450,7 +450,7 @@ sunPMT.controller('PopCoverageController',
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8"
         });
         
-        var reportName = ActionMappingUtils.getReportName($translate.instant('pop_coverage_per_sh'), 
+        var reportName = CommonUtils.getReportName($translate.instant('pop_coverage_per_sh'), 
                                         $scope.model.selectedRole,
                                         $scope.selectedOrgUnit.n,
                                         $scope.model.selectedOuMode,

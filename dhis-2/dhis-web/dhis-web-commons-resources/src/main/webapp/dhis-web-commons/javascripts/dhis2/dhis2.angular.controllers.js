@@ -599,4 +599,8 @@ var d2Controllers = angular.module('d2Controllers', [])
     $scope.close = function(){
         $modalInstance.close();
     };
+})
+
+.controller('CANMenuController', function($scope, CommonUtils) {
+	$scope.icons = CommonUtils.getIcons();
 });

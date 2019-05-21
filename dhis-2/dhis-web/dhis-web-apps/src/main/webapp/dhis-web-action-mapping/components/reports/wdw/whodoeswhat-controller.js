@@ -15,7 +15,7 @@ sunPMT.controller('WhoDoesWhatController',
                 MetaDataFactory,
                 OptionComboService,
                 ReportService,
-                ActionMappingUtils) {
+                CommonUtils) {
     $scope.periodOffset = 0;
     $scope.showReportFilters = true;
     $scope.reportReady = false;
@@ -41,7 +41,7 @@ sunPMT.controller('WhoDoesWhatController',
         childrenIds: [],
         children: []};
     
-    $scope.model.stakeholderRoles = ActionMappingUtils.getStakeholderNames();
+    $scope.model.stakeholderRoles = CommonUtils.getStakeholderNames();
     
     function resetParams(){
         $scope.showReportFilters = true;
@@ -59,7 +59,7 @@ sunPMT.controller('WhoDoesWhatController',
         resetParams();
         if( angular.isObject($scope.selectedOrgUnit)){            
             
-            ActionMappingUtils.getChildrenIds($scope.selectedOrgUnit).then(function(response){
+            CommonUtils.getChildrenIds($scope.selectedOrgUnit).then(function(response){
                 $scope.model.childrenIds = response.childrenIds;
                 $scope.model.children = response.children;
                 $scope.model.childrenByIds = response.childrenByIds;
@@ -115,7 +115,7 @@ sunPMT.controller('WhoDoesWhatController',
                 angular.forEach(ouLevels, function(ol){
                     $scope.model.ouLevels[ol.level] = ol.displayName;
                 });                    
-                var res = ActionMappingUtils.populateOuLevels($scope.selectedOrgUnit, $scope.model.ouLevels);
+                var res = CommonUtils.populateOuLevels($scope.selectedOrgUnit, $scope.model.ouLevels);
                 $scope.model.ouModes = res.ouModes;
                 $scope.model.selectedOuMode = res.selectedOuMode;
             });
@@ -311,7 +311,7 @@ sunPMT.controller('WhoDoesWhatController',
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8"
         });
         
-        var reportName = ActionMappingUtils.getReportName($translate.instant('who_does_what'), 
+        var reportName = CommonUtils.getReportName($translate.instant('who_does_what'), 
                                         $scope.model.selectedRole,
                                         $scope.selectedOrgUnit.n,
                                         $scope.model.selectedOuMode,

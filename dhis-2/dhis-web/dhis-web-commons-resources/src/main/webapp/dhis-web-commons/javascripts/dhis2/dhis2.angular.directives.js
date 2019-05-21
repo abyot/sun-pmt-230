@@ -665,4 +665,15 @@ var d2Directives = angular.module('d2Directives', [])
         link: function (scope, element, attrs) {
         }
     };
-});
+})
+
+.directive('d2CanMenu', function () {
+
+    return {
+        restrict: 'E',
+        templateUrl: '../dhis-web-commons/angular-forms/can-menu.html',
+        link: function (scope, element, attrs) {
+        }
+    };
+})
+;

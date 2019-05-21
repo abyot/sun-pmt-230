@@ -330,7 +330,7 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
     };        
 })
 
-.service('DataValueService', function($http, ActionMappingUtils) {   
+.service('DataValueService', function($http, CommonUtils) {   
     
     return {        
         saveDataValue: function( dv ){
@@ -359,21 +359,21 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
             var promise = $http.get('../api/dataValueSets.json?' + params ).then(function(response){               
                 return response.data;
             }, function(response){
-                ActionMappingUtils.errorNotifier(response);
+                CommonUtils.errorNotifier(response);
             });            
             return promise;
         }
     };    
 })
 
-.service('CompletenessService', function($http, ActionMappingUtils) {   
+.service('CompletenessService', function($http, CommonUtils) {   
     
     return {        
         get: function( ds, ou, startDate, endDate, children ){
             var promise = $http.get('../api/completeDataSetRegistrations?dataSet='+ds+'&orgUnit='+ou+'&startDate='+startDate+'&endDate='+endDate+'&children='+children).then(function(response){
                 return response.data;
             }, function(response){
-                ActionMappingUtils.errorNotifier(response);
+                CommonUtils.errorNotifier(response);
             });
             return promise;
         },
@@ -390,7 +390,7 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
             var promise = $http.post('../api/completeDataSetRegistrations?ds='+ ds + '&pe=' + pe + '&ou=' + ou + '&cc=' + cc + '&cp=' + cp + '&multiOu=' + multiOu ).then(function(response){
                 return response.data;
             }, function(response){
-                ActionMappingUtils.errorNotifier(response);
+                CommonUtils.errorNotifier(response);
             });
             return promise;
         },
@@ -398,49 +398,49 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
             var promise = $http.delete('../api/completeDataSetRegistrations?ds='+ ds + '&pe=' + pe + '&ou=' + ou + '&cc=' + cc + '&cp=' + cp + '&multiOu=' + multiOu ).then(function(response){
                 return response.data;
             }, function(response){
-                ActionMappingUtils.errorNotifier(response);
+                CommonUtils.errorNotifier(response);
             });
             return promise;
         }
     };
 })
 
-.service('DataValueAuditService', function($http, ActionMappingUtils) {   
+.service('DataValueAuditService', function($http, CommonUtils) {   
     
     return {        
         getDataValueAudit: function( dv ){
             var promise = $http.get('../api/audits/dataValue.json?paging=false&de='+dv.de+'&ou='+dv.ou+'&pe='+dv.pe+'&co='+dv.co+'&cc='+dv.cc).then(function(response){
                 return response.data;
             }, function(response){
-                ActionMappingUtils.errorNotifier(response);
+                CommonUtils.errorNotifier(response);
             });
             return promise;
         }
     };
 })
 
-.service('EventValueAuditService', function($http, ActionMappingUtils) {   
+.service('EventValueAuditService', function($http, CommonUtils) {   
     
     return {        
         getEventValueAudit: function( event ){
             var promise = $http.get('../api/audits/trackedEntityDataValue.json?paging=false&psi='+event).then(function(response){
                 return response.data;
             }, function(response){
-                ActionMappingUtils.errorNotifier(response);
+                CommonUtils.errorNotifier(response);
             });
             return promise;
         }
     };
 })
 
-.service('StakeholderService', function($http, ActionMappingUtils) {   
+.service('StakeholderService', function($http, CommonUtils) {   
     
     return {        
         addCategoryOption: function( categoryOption ){
             var promise = $http.post('../api/categoryOptions.json' , categoryOption ).then(function(response){
                 return response.data;
             }, function(response){
-                ActionMappingUtils.errorNotifier(response);
+                CommonUtils.errorNotifier(response);
             });
             return promise;
         },
@@ -448,7 +448,7 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
             var promise = $http.put('../api/categories/' + category.id + '.json&mergeMode=MERGE', category ).then(function(response){
                 return response.data;
             }, function(response){
-                ActionMappingUtils.errorNotifier(response);
+                CommonUtils.errorNotifier(response);
             });
             return promise;
         },
@@ -456,7 +456,7 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
             var promise = $http.get('../api/categoryCombos/' + uid + '.json?fields=id,displayName,code,skipTotal,isDefault,categoryOptionCombos[id,displayName,categoryOptions[displayName]],categories[id,displayName,code,dimension,dataDimensionType,attributeValues[value,attribute[id,name,valueType,code]],categoryOptions[id,displayName,code]]').then(function(response){
                 return response.data;
             }, function(response){
-                ActionMappingUtils.errorNotifier(response);
+                CommonUtils.errorNotifier(response);
             });
             return promise;
         },
@@ -464,7 +464,7 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
             var promise = $http.post('../api/options.json' , opt ).then(function(response){
                 return response.data;
             }, function(response){
-                ActionMappingUtils.errorNotifier(response);
+                CommonUtils.errorNotifier(response);
             });
             return promise;
         },
@@ -472,7 +472,7 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
             var promise = $http.put('../api/optionSets/' + optionSet.id + '.json&mergeMode=MERGE', optionSet ).then(function(response){
                 return response.data;
             }, function(response){
-                ActionMappingUtils.errorNotifier(response);
+                CommonUtils.errorNotifier(response);
             });
             return promise;
         },
@@ -480,7 +480,7 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
             var promise = $http.get('../api/optionSets/' + uid + '.json?paging=false&fields=id,name,displayName,version,valueType,attributeValues[value,attribute[id,name,valueType,code]],options[id,name,displayName,code]').then(function(response){
                 return response.data;
             }, function(response){
-                ActionMappingUtils.errorNotifier(response);
+                CommonUtils.errorNotifier(response);
             });
             return promise;
         }
@@ -502,237 +502,20 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
     };
 })
 
-.service('MaintenanceService', function($http, ActionMappingUtils){
+.service('MaintenanceService', function($http, CommonUtils){
     return {
         updateOptionCombo: function(){
             var promise = $http.post('../api/maintenance/categoryOptionComboUpdate' , true ).then(function(response){
                 return response.data;
             }, function(response){
-                ActionMappingUtils.errorNotifier(response);
+                CommonUtils.errorNotifier(response);
             });
             return promise;
         }
     };
 })
 
-.service('ActionMappingUtils', function($q, $translate, $filter, orderByFilter, DialogService, OrgUnitService){
-    return {
-        getSum: function( op1, op2 ){
-            op1 = dhis2.validation.isNumber(op1) ? parseInt(op1) : 0;
-            op2 = dhis2.validation.isNumber(op2) ? parseInt(op2) : 0;        
-            return op1 + op2;
-        },
-        getPercent: function(op1, op2){        
-            op1 = dhis2.validation.isNumber(op1) ? parseInt(op1) : 0;
-            op2 = dhis2.validation.isNumber(op2) ? parseInt(op2) : 0;        
-            if( op1 === 0){
-                return "";
-            }
-            if( op2 === 0 ){
-                return $translate.instant('missing_target');
-            }
-            return parseFloat((op1 / op2)*100).toFixed(2) + '%';
-        },
-        getRoleHeaders: function(){
-            var headers = [];            
-            headers.push({id: 'catalyst', displayName: $translate.instant('catalyst')});
-            headers.push({id: 'funder', displayName: $translate.instant('funder')});
-            headers.push({id: 'responsibleMinistry', displayName: $translate.instant('responsible_ministry')});
-            
-            return headers;
-        },
-        getOptionComboIdFromOptionNames: function(optionComboMap, options){
-            
-            var optionNames = [];
-            angular.forEach(options, function(op){
-                optionNames.push(op.displayName);
-            });
-            
-            var selectedAttributeOcboName = optionNames.toString();
-            //selectedAttributeOcboName = selectedAttributeOcboName.replace(/\,/g, ', ');
-            var selectedAttributeOcobo = optionComboMap['"' + selectedAttributeOcboName + '"'];
-            
-            if( !selectedAttributeOcobo || angular.isUndefined( selectedAttributeOcobo ) ){
-                selectedAttributeOcboName = optionNames.reverse().toString();
-                //selectedAttributeOcboName = selectedAttributeOcboName.replace(",", ", ");
-                selectedAttributeOcobo = optionComboMap['"' + selectedAttributeOcboName + '"'];
-            }
-            
-            return selectedAttributeOcobo;
-        },
-        splitRoles: function( roles ){
-            return roles.split(","); 
-        },
-        pushRoles: function(existingRoles, roles){
-            var newRoles = roles.split(",");
-            angular.forEach(newRoles, function(r){
-                if( existingRoles.indexOf(r) === -1 ){
-                    existingRoles.push(r);
-                }
-            });            
-            return existingRoles;
-        },
-        getOptionIds: function(options){            
-            var optionNames = '';
-            angular.forEach(options, function(o){
-                optionNames += o.id + ';';
-            });            
-            
-            return optionNames.slice(0,-1);
-        },
-        errorNotifier: function(response){
-            if( response && response.data && response.data.status === 'ERROR'){
-                var dialogOptions = {
-                    headerText: response.data.status,
-                    bodyText: response.data.message ? response.data.message : $translate.instant('unable_to_fetch_data_from_server')
-                };		
-                DialogService.showDialog({}, dialogOptions);
-            }
-        },
-        getNumeratorAndDenominatorIds: function( ind ){
-            var expressionRegx = /[#\{\}]/g;
-            var num = ind.numerator.replace(expressionRegx, '');
-            var den = ind.denominator.replace(expressionRegx, '');
-            
-            if( num.indexOf('.') === -1 ){
-                num = num + '.HllvX50cXC0';                
-            }
-            num = num.split('.');
-            
-            if( den.indexOf('.') === -1 ){
-                den = den + '.HllvX50cXC0';                
-            }
-            den = den.split('.');            
-            return {numerator: num[0], numeratorOptionCombo: num[1], denominator: den[0], denominatorOptionCombo: den[1]};
-        },
-        getStakeholderCategoryFromDataSet: function(dataSet, availableCombos, existingCategories, categoryIds){
-            if( dataSet.categoryCombo && dataSet.categoryCombo.id){
-                var cc = availableCombos[dataSet.categoryCombo.id];
-                if( cc && cc.categories ){
-                    angular.forEach(cc.categories, function(c){
-                        if( c.code === 'FI' && categoryIds.indexOf( c.id )){
-                            existingCategories.push( c );
-                            categoryIds.push( c.id );
-                        }
-                    });
-                }
-            }
-            return {categories: existingCategories, categoryIds: categoryIds};
-        },
-        getDMCategoryFromDataSet: function(dataSet, availableCombos, existingCategories, categoryIds){
-            if( dataSet.categoryCombo && dataSet.categoryCombo.id){
-                var cc = availableCombos[dataSet.categoryCombo.id];
-                if( cc && cc.categories ){
-                    angular.forEach(cc.categories, function(c){
-                        if( c.code === 'DM' && categoryIds.indexOf( c.id )){
-                            existingCategories.push( c );
-                            categoryIds.push( c.id );
-                        }
-                    });
-                }
-            }
-            return {categories: existingCategories, categoryIds: categoryIds};
-        },
-        getRequiredCols: function(availableRoles, selectedRole){
-            var cols = [];
-            for (var k in availableRoles[selectedRole.id]){
-                if ( availableRoles[selectedRole.id].hasOwnProperty(k) ) {
-                    angular.forEach(availableRoles[selectedRole.id][k], function(c){
-                        c = c.trim();
-                        if( cols.indexOf( c ) === -1 ){
-                            c = c.trim();
-                            if( selectedRole.domain === 'CA' ){
-                                if( selectedRole.categoryOptions && selectedRole.categoryOptions.indexOf( c ) !== -1){
-                                    cols.push( c );
-                                }
-                            }
-                            else{
-                                cols.push( c );
-                            }                        
-                        }
-                    });                
-                }
-            }
-            return cols.sort();
-        },
-        populateOuLevels: function( orgUnit, ouLevels ){
-            var ouModes = [{displayName: $translate.instant('selected_level') , value: 'SELECTED', level: orgUnit.l}];
-            var limit = orgUnit.l === 1 ? 2 : 3;
-            for( var i=orgUnit.l+1; i<=limit; i++ ){
-                var lvl = ouLevels[i];
-                ouModes.push({value: lvl, displayName: lvl, level: i});
-            }
-            var selectedOuMode = ouModes[0];            
-            return {ouModes: ouModes, selectedOuMode: selectedOuMode};
-        },
-        getChildrenIds: function( orgUnit ){
-            var def = $q.defer();
-            OrgUnitService.get( orgUnit.id ).then(function( json ){
-                var childrenIds = [];
-                var children = json.organisationUnits;
-                var childrenByIds = [];
-                var allChildren = [];
-                angular.forEach(children, function(c){
-                    c.path = c.path.substring(1, c.path.length);
-                    c.path = c.path.split("/");
-                    childrenByIds[c.id] = c;
-                    if( c.level <= 3 ){
-                        allChildren.push( c );
-                    }
-                });                    
-                
-                if( orgUnit.l === 1 ){
-                    angular.forEach($filter('filter')(children, {level: 3}), function(c){
-                        childrenIds.push(c.id);                        
-                    });
-                }
-                else if ( orgUnit.l === 2 ){
-                    childrenIds = orgUnit.c;
-                }
-                else {
-                    childrenIds = [orgUnit.id];
-                }
-
-                def.resolve( {childrenIds: childrenIds, allChildren: allChildren, children: $filter('filter')(children, {parent: {id: orgUnit.id}}), descendants: $filter('filter')(children, {level: 3}), childrenByIds: childrenByIds } );
-            });
-            
-            return def.promise;
-        },
-        processDataSet: function( ds ){
-            var dataElements = [];
-            angular.forEach(ds.dataSetElements, function(dse){
-                if( dse.dataElement ){
-                    dataElements.push( dhis2.metadata.processMetaDataAttribute( dse.dataElement ) );
-                }                            
-            });
-            ds.dataElements = dataElements;
-            delete ds.dataSetElements;
-            
-            return ds;
-        },
-        getReportName: function(reportType, reportRole, ouName, ouLevel, peName){
-            var reportName = ouName;
-            if( ouLevel && ouLevel.value && ouLevel.value !== 'SELECTED' ){
-                reportName += ' (' + ouLevel.displayName + ') ';
-            }
-            
-            reportName += ' - ' + reportType;
-            
-            if( reportRole && reportRole.displayNme ){
-                reportName += ' (' + reportRole.displayName + ')'; 
-            }
-            
-            reportName += ' - ' + peName + '.xls';
-            return reportName;
-        },
-        getStakeholderNames: function(){
-            var stakeholders = [{id: 'CA_ID', displayName: $translate.instant('catalyst')},{id: 'FU_ID', displayName: $translate.instant('funder')},{id: 'RM_ID', displayName: $translate.instant('responsible_ministry')}];
-            return stakeholders;
-        }
-    };
-})
-
-.service('ReportService', function($q, $filter, orderByFilter, EventService, DataValueService, ActionMappingUtils){
+.service('ReportService', function($q, $filter, orderByFilter, EventService, DataValueService, CommonUtils){
     return {        
         getReportData: function(reportParams, reportData){            
             var def = $q.defer();
@@ -778,7 +561,7 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
                                         reportData.availableRoles[dv.dataElement][ev.categoryOptionCombo] = [];
                                     }   
 
-                                    reportData.availableRoles[dv.dataElement][ev.categoryOptionCombo] = ActionMappingUtils.pushRoles( reportData.availableRoles[dv.dataElement][ev.categoryOptionCombo], dv.value );
+                                    reportData.availableRoles[dv.dataElement][ev.categoryOptionCombo] = CommonUtils.pushRoles( reportData.availableRoles[dv.dataElement][ev.categoryOptionCombo], dv.value );
                                 }
                             });                    
                             reportData.mappedRoles[reportData.programCodesById[ev.program]][ev.orgUnit][ev.categoryOptionCombo][ev.attributeOptionCombo] = _ev;
@@ -807,7 +590,7 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
                                             reportData.availableRoles[oco.categories[i].id][dv.categoryOptionCombo] = [];
                                         }
 
-                                        reportData.availableRoles[oco.categories[i].id][dv.categoryOptionCombo] = ActionMappingUtils.pushRoles( reportData.availableRoles[oco.categories[i].id][dv.categoryOptionCombo], oco.displayName );
+                                        reportData.availableRoles[oco.categories[i].id][dv.categoryOptionCombo] = CommonUtils.pushRoles( reportData.availableRoles[oco.categories[i].id][dv.categoryOptionCombo], oco.displayName );
                                     }
 
                                     if( reportData.mappedRoles[reportData.dataElementCodesById[dv.dataElement]] &&
@@ -902,7 +685,7 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
 })
 
 /* service for handling events */
-.service('EventService', function($http, $q, DHIS2URL, ActionMappingUtils) {   
+.service('EventService', function($http, $q, DHIS2URL, CommonUtils) {   
     
     var skipPaging = "&skipPaging=true";
     
@@ -924,7 +707,7 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
         var promise = $http.get( url ).then(function(response){
             return response.data.events;
         }, function(response){
-            ActionMappingUtils.errorNotifier(response);
+            CommonUtils.errorNotifier(response);
         });            
         return promise;
     };

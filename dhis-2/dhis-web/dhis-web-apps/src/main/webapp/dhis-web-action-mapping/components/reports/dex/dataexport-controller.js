@@ -15,7 +15,7 @@ sunPMT.controller('DataExportController',
                 PeriodService,
                 MetaDataFactory,
                 DataSetFactory,
-                ActionMappingUtils,
+                CommonUtils,
                 OptionComboService,
                 ReportService) {
     $scope.periodOffset = 0;
@@ -52,7 +52,7 @@ sunPMT.controller('DataExportController',
         childrenIds: [],
         children: []};
     
-    $scope.model.stakeholderRoles = ActionMappingUtils.getStakeholderNames();
+    $scope.model.stakeholderRoles = CommonUtils.getStakeholderNames();
     
     function resetParams(){
         $scope.showReportFilters = true;
@@ -72,7 +72,7 @@ sunPMT.controller('DataExportController',
         $scope.model.selectedRole = null;
         resetParams();
         if( angular.isObject($scope.selectedOrgUnit)){
-            ActionMappingUtils.getChildrenIds($scope.selectedOrgUnit).then(function(response){
+            CommonUtils.getChildrenIds($scope.selectedOrgUnit).then(function(response){
                 $scope.model.childrenIds = response.childrenIds;
                 $scope.model.children = response.children;
                 $scope.model.childrenByIds = response.childrenByIds;
@@ -112,7 +112,7 @@ sunPMT.controller('DataExportController',
                     }
                 });
                 
-                var res = ActionMappingUtils.populateOuLevels($scope.selectedOrgUnit, $scope.model.ouLevels);
+                var res = CommonUtils.populateOuLevels($scope.selectedOrgUnit, $scope.model.ouLevels);
                 $scope.model.ouModes = res.ouModes;
                 $scope.model.selectedOuMode = res.selectedOuMode;
                 
@@ -163,7 +163,7 @@ sunPMT.controller('DataExportController',
                     });
                     
                     angular.forEach($scope.model.indicators, function(ind){
-                        ind = ActionMappingUtils.getNumeratorAndDenominatorIds( ind );
+                        ind = CommonUtils.getNumeratorAndDenominatorIds( ind );
                         if( ind.numerator ){
                             $scope.model.indicatorsMappedByNumerator[ind.numerator] = ind;
                         }
@@ -177,7 +177,7 @@ sunPMT.controller('DataExportController',
                             if( ds.dataElements && ds.dataElements[0] && ds.dataElements[0].code ){
                                 $scope.model.dataElementsByCode[ds.dataElements[0].code] = ds.dataElements[0];
                                 $scope.model.dataSetsByDataElementId[ds.dataElements[0].id] = ds;
-                                var res = ActionMappingUtils.getStakeholderCategoryFromDataSet(ds, $scope.model.categoryCombos, $scope.model.stakeholderCategories, $scope.model.pushedCategoryIds);
+                                var res = CommonUtils.getStakeholderCategoryFromDataSet(ds, $scope.model.categoryCombos, $scope.model.stakeholderCategories, $scope.model.pushedCategoryIds);
                                 $scope.model.stakeholderCategories = res.categories;
                                 $scope.model.pushedCategoryIds = res.categoryIds;
                             }
@@ -338,7 +338,7 @@ sunPMT.controller('DataExportController',
                 var values = $filter('filter')($scope.model.mappedValues.dataValues, {dataElement: de.id, categoryOptionCombo: oc.id, orgUnit: ou.id});                
                 
                 angular.forEach(values, function(value){
-                    beneficiaries = ActionMappingUtils.getSum(beneficiaries, value.value);
+                    beneficiaries = CommonUtils.getSum(beneficiaries, value.value);
                     
                     angular.forEach($scope.model.keyCategories, function(cat){
                         if(value[cat.id]){
@@ -411,7 +411,7 @@ sunPMT.controller('DataExportController',
     };
 
     $scope.valueExists = function(ou, ind){        
-        ind = ActionMappingUtils.getNumeratorAndDenominatorIds( ind );
+        ind = CommonUtils.getNumeratorAndDenominatorIds( ind );
         var filteredNumerators = $filter('filter')($scope.model.mappedValues.dataValues, {dataElement: ind.numerator, categoryOptionCombo: ind.numeratorOptionCombo});
         var filteredDenominators = $filter('filter')($scope.model.mappedValues.dataValues, {dataElement: ind.denominator, categoryOptionCombo: ind.denominatorOptionCombo});
         
@@ -453,7 +453,7 @@ sunPMT.controller('DataExportController',
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8"
         });
         
-        var reportName = ActionMappingUtils.getReportName($translate.instant('pop_coverage_per_sh'), 
+        var reportName = CommonUtils.getReportName($translate.instant('pop_coverage_per_sh'), 
                                         $scope.model.selectedRole,
                                         $scope.selectedOrgUnit.n,
                                         $scope.model.selectedOuMode,

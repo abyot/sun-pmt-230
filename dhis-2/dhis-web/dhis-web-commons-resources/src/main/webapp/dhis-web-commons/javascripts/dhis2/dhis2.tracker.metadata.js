@@ -27,11 +27,54 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-dhis2.util.namespace('dhis2.tracker');
+dhis2.util.namespace('dhis2.metadata');
 
-dhis2.tracker.chunk = function( array, size ){
-	if( !array.length || !size || size < 1 ){
-		return []
+dhis2.metadata.custSeparator   = '.';
+dhis2.metadata.formulaRegex    = /#\{.+?\}/g;
+dhis2.metadata.expressionRegex = /#{.*?\}/g;
+dhis2.metadata.operatorRegex   = /[#\{\}]/g;
+
+dhis2.metadata.expressionMatcher = function( obj, src, des, expressionPattern, operandPattern, src2){
+    var match;    
+    if( src2 ){
+        if( obj[src] && obj[src][src2] && expressionPattern && operandPattern && obj[des]){
+            while (match = expressionPattern.exec( obj[src][src2] ) ) {                                
+                match[0] = match[0].replace( operandPattern, '' );                
+                obj[des].push(match[0].split('.')[0]);                                
+            }
+        }    
+    }
+    else{
+        if( obj[src] && expressionPattern && operandPattern && obj[des]){
+            while (match = expressionPattern.exec( obj[src] ) ) {                                
+                match[0] = match[0].replace( operandPattern, '' );
+                obj[des].push(match[0]);                                
+            }
+        }    
+    }
+    
+    return obj;
+};
+
+dhis2.metadata.cartesianProduct = function( arrays ){
+    
+    var i, j, l, m, a1, o = [];
+    if (!arrays || arrays.length == 0) return arrays;
+
+    a1 = arrays.splice(0,1);
+    arrays = dhis2.metadata.cartesianProduct( arrays );
+    for (i = 0, l = a1[0].length; i < l; i++) {
+        if (arrays && arrays.length) for (j = 0, m = arrays.length; j < m; j++)
+            o.push([a1[0][i]].concat(arrays[j]));
+        else
+            o.push([a1[0][i]]);
+    }
+    return o;
+};
+
+dhis2.metadata.chunk = function( array, size ){
+	if( !array || !array.length || !size || size < 1 ){
+            return [];
 	}
 	
 	var groups = [];
@@ -41,37 +84,62 @@ dhis2.tracker.chunk = function( array, size ){
     }
 	
     return groups;
-}
+};
 
-dhis2.tracker.getTrackerMetaObjects = function( programs, objNames, url, filter )
-{
-    if( !programs || !programs.programIds || programs.programIds.length === 0 ){
+dhis2.metadata.processMetaDataAttribute = function( obj )
+{    
+    if(!obj){
         return;
-    }       
+    }
+    
+    if(obj.attributeValues){
+        for(var i=0; i<obj.attributeValues.length; i++){
+            if(obj.attributeValues[i].value && obj.attributeValues[i].attribute && obj.attributeValues[i].attribute.code && obj.attributeValues[i].attribute.valueType){                
+            	if( obj.attributeValues[i].attribute.valueType === 'BOOLEAN' || obj.attributeValues[i].attribute.valueType === 'TRUE_ONLY' ){
+                    if( obj.attributeValues[i].value === 'true' ){
+                        obj[obj.attributeValues[i].attribute.code] = true;
+                    }                    
+            	}
+            	else if( obj.attributeValues[i].attribute.valueType === 'NUMBER' && obj.attributeValues[i].value ){
+                    obj[obj.attributeValues[i].attribute.code] = parseInt( obj.attributeValues[i].value );
+            	}
+                else{
+                    obj[obj.attributeValues[i].attribute.code] = obj.attributeValues[i].value;
+                }                
+            }
+        }
+    }
+    
+    //delete obj.attributeValues;
+   
+    return obj;    
+};
 
-    filter = filter + '[' + programs.programIds.toString() + ']';
-    
+dhis2.metadata.getMetaObjectIds = function( objNames, url, filter )
+{
     var def = $.Deferred();
-    
+    var objs = [];
+    var url = encodeURI( url );
     $.ajax({
         url: url,
         type: 'GET',
         data:filter
     }).done( function(response) {
-        
-        def.resolve( {programs: programs, self: response[objNames], programIds: programs.programIds} );
+        _.each( _.values( response[objNames] ), function ( obj ) {        
+        	objs.push( obj );
+        });
+        def.resolve( objs );
         
     }).fail(function(){
         def.resolve( null );
     });
     
-    return def.promise();
-    
+    return def.promise();    
 };
 
-dhis2.tracker.checkAndGetTrackerObjects  = function( obj, store, url, filter, db )
-{
-    if( !obj || !obj.programs || !obj.programIds || !obj.self || !db ){
+dhis2.metadata.filterMissingObjIds  = function( store, db, objs )
+{   
+    if( !objs || !objs.length || objs.length < 1){
         return;
     }
     
@@ -84,15 +152,20 @@ dhis2.tracker.checkAndGetTrackerObjects  = function( obj, store, url, filter, db
     var builder = $.Deferred();
     var build = builder.promise();
 
-    var ids = [];
-    _.each( _.values( obj.self ), function ( obj) {
+    var missingObjIds = [];
+    _.each( _.values( objs ), function ( obj ) {
         build = build.then(function() {
             var d = $.Deferred();
             var p = d.promise();
             db.get(store, obj.id).done(function(o) {
-                //if(!o) {                    
-                    ids.push( obj.id );
-                //}
+                if( !o ) {                    
+                	missingObjIds.push( obj.id );
+                }
+                else{
+                	if( obj.version && o.version != obj.version ){
+                		missingObjIds.push( obj.id );
+                	}
+                }
                 d.resolve();
             });
 
@@ -102,16 +175,8 @@ dhis2.tracker.checkAndGetTrackerObjects  = function( obj, store, url, filter, db
 
     build.done(function() {
         def.resolve();
-        promise = promise.done( function () {
-            
-            if( ids && ids.length > 0 ){
-                var _ids = ids.toString();
-                _ids = '[' + _ids + ']';
-                filter = filter + '&filter=id:in:' + _ids + '&paging=false';
-                mainPromise = mainPromise.then( dhis2.tracker.getTrackerObjects( store, store, url, filter, 'idb', db ) );
-            }
-            
-            mainDef.resolve( obj.programs, obj.programIds );
+        promise = promise.done( function () {            
+            mainDef.resolve( missingObjIds );
         } );
     }).fail(function(){
         mainDef.resolve( null );
@@ -122,16 +187,155 @@ dhis2.tracker.checkAndGetTrackerObjects  = function( obj, store, url, filter, db
     return mainPromise;
 };
 
-dhis2.tracker.getTrackerObjects = function( store, objs, url, filter, storage, db )
+dhis2.metadata.getBatches = function( ids, batchSize, store, objs, url, filter, storage, db, func )
+{    
+    if( !ids || !ids.length || ids.length < 1){
+        return;
+    }
+    
+    var batches = dhis2.metadata.chunk( ids, batchSize );
+
+    var mainDef = $.Deferred();
+    var mainPromise = mainDef.promise();
+
+    var def = $.Deferred();
+    var promise = def.promise();
+
+    var builder = $.Deferred();
+    var build = builder.promise();
+    
+    _.each( _.values( batches ), function ( batch ) {        
+        promise = promise.then(function(){
+            return dhis2.metadata.fetchBatchItems( batch, store, objs, url, filter, storage, db, func );
+        });
+    });
+
+    build.done(function() {
+        def.resolve();
+        promise = promise.done( function () {
+            mainDef.resolve();
+        } );        
+        
+    }).fail(function(){
+        mainDef.resolve( null );
+    });
+
+    builder.resolve();
+
+    return mainPromise;
+};
+
+dhis2.metadata.fetchBatchItems = function( batch, store, objs, url, filter, storage, db, func )
+{   
+    var ids = '[' + batch.toString() + ']';             
+    filter = filter + '&filter=id:in:' + ids;    
+    return dhis2.metadata.getMetaObjects( store, objs, url, filter, storage, db, func );    
+};
+
+dhis2.metadata.getMetaObjects = function( store, objs, url, filter, storage, db, func )
 {
     var def = $.Deferred();
 
+    var url = encodeURI( url );
+    
     $.ajax({
         url: url,
         type: 'GET',
         data: filter
     }).done(function(response) {
         if(response[objs]){
+            var count = 0;
+            _.each( _.values( response[objs] ), function ( obj ) {        
+                obj = dhis2.metadata.processMetaDataAttribute( obj );
+                if( func ) {
+                    obj = func(obj, 'organisationUnits');
+                }                
+                if( store === 'categoryCombos' ){
+                    
+                	if( obj.categories ){
+                        _.each( _.values( obj.categories ), function ( ca ) {                            
+                            if( ca.categoryOptions ){
+                                _.each( _.values( ca.categoryOptions ), function ( co ) {
+                                    co.mappedOrganisationUnits = [];
+                                    if( co.organisationUnits && co.organisationUnits.length > 0 ){                                        
+                                        co.mappedOrganisationUnits = $.map(co.organisationUnits, function(ou){return ou.id;});
+                                    }
+                                    delete co.organisationUnits;
+                                });
+                            }
+                        });
+                    }
+                	
+                    if( obj.categoryOptionCombos && obj.categories ){
+                        var categoryOptions = [];
+                        _.each( _.values( obj.categories ), function ( cat ) {                            
+                            if( cat.categoryOptions ){                                
+                                categoryOptions.push(  $.map(cat.categoryOptions, function(co){return co.displayName;}) );
+                            }                            
+                        });                        
+
+                        var cocs = dhis2.metadata.cartesianProduct( categoryOptions );                        
+                        
+                        var sortedOptionCombos = [];
+                        _.each( _.values( cocs ), function ( coc ) {                        
+                            for( var i=0; i<obj.categoryOptionCombos.length; i++){                            
+                                var opts = obj.categoryOptionCombos[i].displayName.split(', ');                                
+                                var itsc = _.intersection(opts, coc);
+                                if( itsc.length === opts.length && itsc.length === coc.length ){
+                                    sortedOptionCombos.push({id: obj.categoryOptionCombos[i].id, displayName: coc.join(', ')} );
+                                    break;
+                                }
+                            }
+                        });
+                        obj.categoryOptionCombos = sortedOptionCombos;
+                        /*if( obj.categoryOptionCombos.length !== sortedOptionCombos.length ){
+                            console.log(obj.displayName, ' - ', obj.categoryOptionCombos.length, ' - ', sortedOptionCombos.length);
+                        }
+                        else{
+                            obj.categoryOptionCombos = sortedOptionCombos;
+                        }*/
+                    }                    
+                }
+                else if( store === 'dataSets' ){
+                    
+                    if( obj.sections ){
+                        _.each(obj.sections, function(sec){                
+                            if( sec.indicators ){
+                                angular.forEach(sec.indicators, function(ind){
+                                    ind=dhis2.metadata.processMetaDataAttribute(ind);
+                                    ind.params=[];
+                                    ind=dhis2.metadata.expressionMatcher(ind,'numerator','params',dhis2.metadata.expressionRegex,dhis2.metadata.operatorRegex);
+                                    ind=dhis2.metadata.expressionMatcher(ind,'denominator','params',dhis2.metadata.expressionRegex,dhis2.metadata.operatorRegex);
+                                });
+                            }
+                            if( sec.greyedFields ){
+                                var greyedFields = [];
+                                greyedFields = $.map(sec.greyedFields, function(gf){return gf.dimensionItem;});
+                                sec.greyedFields = greyedFields;
+                            }
+                        });
+                    }
+                    
+                    var dataElements = [];
+                    _.each(obj.dataSetElements, function(dse){
+                        if( dse.dataElement ){
+                            dataElements.push( dhis2.metadata.processMetaDataAttribute( dse.dataElement ) );
+                        }                            
+                    });
+                    obj.dataElements = dataElements;
+                    delete obj.dataSetElements;                    
+                }
+                else if( store === 'validationRules' ){
+                    obj.params = [];
+                    obj = dhis2.metadata.expressionMatcher(obj, 'leftSide', 'params',dhis2.metadata.expressionRegex, dhis2.metadata.operatorRegex, 'expression');
+                    obj = dhis2.metadata.expressionMatcher(obj, 'rightSide', 'params',dhis2.metadata.expressionRegex, dhis2.metadata.operatorRegex, 'expression');
+                }
+                else if( store === 'periodTypes' ){
+                    obj.id = count;
+                }
+                count++;
+            });            
+            
             if(storage === 'idb'){
                 db.setAll( store, response[objs] );                
             }
@@ -157,14 +361,16 @@ dhis2.tracker.getTrackerObjects = function( store, objs, url, filter, storage, d
     return def.promise();
 };
 
-dhis2.tracker.getTrackerObject = function( id, store, url, filter, storage, db )
+dhis2.metadata.getMetaObject = function( id, store, url, filter, storage, db )
 {
     var def = $.Deferred();
     
     if(id){
         url = url + '/' + id + '.json';
     }
-        
+     
+    var url = encodeURI( url );
+    
     $.ajax({
         url: url,
         type: 'GET',            
@@ -191,47 +397,18 @@ dhis2.tracker.getTrackerObject = function( id, store, url, filter, storage, db )
     return def.promise();
 };
 
-dhis2.tracker.getBatches = function( ids, batchSize, data, store, objs, url, filter, storage, db )
-{
-    if( !ids || !ids.length || ids.length < 1){
-        return;
-    }
-    
-    var batches = dhis2.tracker.chunk( ids, batchSize );
-
-    var mainDef = $.Deferred();
-    var mainPromise = mainDef.promise();
-
-    var def = $.Deferred();
-    var promise = def.promise();
-
-    var builder = $.Deferred();
-    var build = builder.promise();
-    
-    _.each( _.values( batches ), function ( batch ) {        
-        promise = promise.then(function(){
-            return dhis2.tracker.fetchBatchItems( batch, store, objs, url, filter, storage, db );
-        });
-    });
-
-    build.done(function() {
-        def.resolve();
-        promise = promise.done( function () {
-            mainDef.resolve( data );
-        } );        
-        
-    }).fail(function(){
-        mainDef.resolve( null );
-    });
-
-    builder.resolve();
-
-    return mainPromise;
-};
-
-dhis2.tracker.fetchBatchItems = function( batch, store, objs, url, filter, storage, db )
-{   
-    var ids = '[' + batch.toString() + ']';             
-    filter = filter + '&filter=id:in:' + ids;    
-    return dhis2.tracker.getTrackerObjects( store, objs, url, filter, storage, db );    
+dhis2.metadata.processObject = function(obj, prop){
+	if( obj[prop] ){
+		var oo = {};
+	    _.each(_.values( obj[prop]), function(o){
+                if( o.displayName ){
+                    oo[o.id] = o.displayName;
+                }
+                else{
+                    oo[o.id] = o.id;
+                }
+	    });
+	    obj[prop] = oo;
+	}    
+    return obj;
 };

@@ -17,14 +17,14 @@ sunPMT.controller('dataEntryController',
                 DataSetFactory,
                 PeriodService,
                 MetaDataFactory,
-                ActionMappingUtils,
+                CommonUtils,
                 DataValueService,
                 EventService,
                 CompletenessService,
                 ModalService,
                 DialogService) {
     $scope.periodOffset = 0;
-    $scope.saveStatus = {};
+    $scope.saveStatus = {};    
     var addNewOption = {code: 'ADD_NEW_OPTION', id: 'ADD_NEW_OPTION', displayName: '[Add New Stakeholder]'};
     $scope.model = {invalidDimensions: false,
                     selectedAttributeCategoryCombo: null,
@@ -269,10 +269,10 @@ sunPMT.controller('dataEntryController',
                 }
             }
             
-            $scope.model.selectedAttributeOptionCombo = ActionMappingUtils.getOptionComboIdFromOptionNames($scope.model.selectedAttributeOptionCombos, $scope.model.selectedOptions);
+            $scope.model.selectedAttributeOptionCombo = CommonUtils.getOptionComboIdFromOptionNames($scope.model.selectedAttributeOptionCombos, $scope.model.selectedOptions);
 
             //fetch events containing stakholder-role mapping
-            $scope.model.attributeCategoryUrl = {cc: $scope.model.selectedAttributeCategoryCombo.id, default: $scope.model.selectedAttributeCategoryCombo.isDefault, cp: ActionMappingUtils.getOptionIds($scope.model.selectedOptions)};
+            $scope.model.attributeCategoryUrl = {cc: $scope.model.selectedAttributeCategoryCombo.id, default: $scope.model.selectedAttributeCategoryCombo.isDefault, cp: CommonUtils.getOptionIds($scope.model.selectedOptions)};
             
             EventService.getByOrgUnitAndProgram($scope.selectedOrgUnit.id, 'CHILDREN', $scope.model.selectedProgram.id, $scope.model.attributeCategoryUrl, null, $scope.model.selectedPeriod.startDate, $scope.model.selectedPeriod.endDate).then(function(events){
                 
@@ -284,7 +284,7 @@ sunPMT.controller('dataEntryController',
                         }                        
                         $scope.model.selectedEvent[ev.orgUnit][ev.categoryOptionCombo] = {event: ev.event, dataValues: ev.dataValues};
                         angular.forEach(ev.dataValues, function(dv){
-                            var val = ActionMappingUtils.pushRoles( $scope.model.stakeholderRoles[ev.orgUnit][ev.categoryOptionCombo][dv.dataElement], dv.value );
+                            var val = CommonUtils.pushRoles( $scope.model.stakeholderRoles[ev.orgUnit][ev.categoryOptionCombo][dv.dataElement], dv.value );
                             $scope.model.stakeholderRoles[ev.orgUnit][ev.categoryOptionCombo][dv.dataElement] = val;
                         });
                     }
@@ -486,7 +486,7 @@ sunPMT.controller('dataEntryController',
                         orgUnit: ou,
                         eventDate: $scope.model.selectedPeriod.endDate,
                         dataValues: [dataValue],
-                        attributeCategoryOptions: ActionMappingUtils.getOptionIds($scope.model.selectedOptions),
+                        attributeCategoryOptions: CommonUtils.getOptionIds($scope.model.selectedOptions),
                         categoryOptionCombo: oco.id
                     };
                     if( !newEvents[ou] ){
@@ -583,7 +583,7 @@ sunPMT.controller('dataEntryController',
                     de: deId,
                     co: ocId,
                     cc: $scope.model.selectedAttributeCategoryCombo.id,
-                    cp: ActionMappingUtils.getOptionIds($scope.model.selectedOptions),
+                    cp: CommonUtils.getOptionIds($scope.model.selectedOptions),
                     value: $scope.model.dataValues[ouId][deId][ocId].value
                 };
                 
@@ -644,7 +644,7 @@ sunPMT.controller('dataEntryController',
                     return $scope.model.selectedCategoryCombos[$scope.model.selectedDataSet.dataElements[0].categoryCombo.id].categoryOptionCombos;
                 },
                 attributeCategoryOptions: function(){
-                    return ActionMappingUtils.getOptionIds($scope.model.selectedOptions);
+                    return CommonUtils.getOptionIds($scope.model.selectedOptions);
                 },
                 allStakeholderRoles: function(){
                     return $scope.model.stakeholderRoles;
@@ -704,7 +704,7 @@ sunPMT.controller('dataEntryController',
                     return $scope.model.selectedAttributeCategoryCombo;
                 },
                 attributeCategoryOptions: function(){
-                    return ActionMappingUtils.getOptionIds($scope.model.selectedOptions);
+                    return CommonUtils.getOptionIds($scope.model.selectedOptions);
                 },
                 attributeOptionCombo: function(){
                     return $scope.model.selectedAttributeOptionCombo;
@@ -775,7 +775,7 @@ sunPMT.controller('dataEntryController',
                 $scope.model.selectedPeriod.id, 
                 orgUnit,
                 $scope.model.selectedAttributeCategoryCombo.id,
-                ActionMappingUtils.getOptionIds($scope.model.selectedOptions),
+                CommonUtils.getOptionIds($scope.model.selectedOptions),
                 multiOrgUnit).then(function(response){
                     
                 var dialogOptions = {
@@ -788,7 +788,7 @@ sunPMT.controller('dataEntryController',
                 $scope.model.dataSetCompletness[$scope.model.selectedAttributeOptionCombo] = true;                
                 
             }, function(response){
-                ActionMappingUtils.errorNotifier( response );
+                CommonUtils.errorNotifier( response );
             });*/
         	
         	CompletenessService.saveDsr(dsr).then(function(response){                        
@@ -800,7 +800,7 @@ sunPMT.controller('dataEntryController',
                 $scope.model.dataSetCompletness[$scope.model.selectedAttributeOptionCombo] = true;                
                 
             }, function(response){
-                ActionMappingUtils.errorNotifier( response );
+                CommonUtils.errorNotifier( response );
             });
         });        
     };
@@ -819,7 +819,7 @@ sunPMT.controller('dataEntryController',
                 $scope.model.selectedPeriod.id, 
                 orgUnit,
                 $scope.model.selectedAttributeCategoryCombo.id,
-                ActionMappingUtils.getOptionIds($scope.model.selectedOptions),
+                CommonUtils.getOptionIds($scope.model.selectedOptions),
                 multiOrgUnit).then(function(response){
                 
                 var dialogOptions = {
@@ -832,7 +832,7 @@ sunPMT.controller('dataEntryController',
                 $scope.model.dataSetCompletness[$scope.model.selectedAttributeOptionCombo] = false;
                 
             }, function(response){
-                ActionMappingUtils.errorNotifier( response );
+                CommonUtils.errorNotifier( response );
             });
         });        
     };

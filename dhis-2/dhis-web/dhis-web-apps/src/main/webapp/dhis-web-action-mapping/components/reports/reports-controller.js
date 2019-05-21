@@ -13,7 +13,7 @@ sunPMT.controller('reportsController',
                 DialogService,
                 PeriodService,
                 MetaDataFactory,
-                ActionMappingUtils,
+                CommonUtils,
                 DataValueService,
                 OptionComboService,
                 EventService) {
@@ -220,7 +220,7 @@ sunPMT.controller('reportsController',
                                 pushedHeaders.push( dv.dataElement );
                                 $scope.model.availableRoles[dv.dataElement] = [];
                             }                            
-                            $scope.model.availableRoles[dv.dataElement] = ActionMappingUtils.pushRoles( $scope.model.availableRoles[dv.dataElement], dv.value );
+                            $scope.model.availableRoles[dv.dataElement] = CommonUtils.pushRoles( $scope.model.availableRoles[dv.dataElement], dv.value );
                         }
                     });                    
                     $scope.model.mappedRoles[$scope.model.programCodesById[ev.program]][ev.orgUnit][ev.attributeOptionCombo] = _ev;
