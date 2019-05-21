@@ -17,6 +17,12 @@
             <result name="success" type="redirect">index.html</result>
         </action>
     </package>
+    
+    <!--<package name="dhis-web-financial-analysis" extends="dhis-web-commons" namespace="/dhis-web-financial-analysis">
+        <action name="index" class="org.hisp.dhis.commons.action.NoAction">
+            <result name="success" type="redirect">index.html</result>
+        </action>
+    </package>-->
 
     <!-- INJECT BUNDLED APPS HERE -->
 </struts>

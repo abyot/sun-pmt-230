@@ -1,0 +1,141 @@
+<div class="vertical-spacing" ng-if="model.selectedDataSet && model.selectedPeriod && model.categoryOptionsReady">
+
+    <div ng-if="model.allowMultiOrgUnitEntry && model.selectedDataSet.entryMode.id === 'children'">
+
+        <div class="remove-left-padding">
+            <div class="col-sm-6 ">
+                <div ng-repeat="dataElement in model.selectedDataSet.dataElements | orderBy: 'displayFormName'" ng-if="dataElement.code !== 'Catalyst' && dataElement.code !== 'Funder' && dataElement.code !== 'RM'">
+                    <table class="table table-bordered table-condensed vertical-spacing">
+                        <tr>
+                            <th class="active pull-center vertical-center" colspan="{{model.selectedCategoryCombos[dataElement.categoryCombo.id].categoryOptionCombos.length + 1}}">
+                                {{dataElement.displayFormName}}
+                            </th>
+                        </tr>
+                        <tr>
+                            <th class="active pull-center vertical-center">
+                                {{'org_unit'| translate}}
+                            </th>
+                            <th class="active pull-center vertical-center" ng-repeat="oco in model.selectedCategoryCombos[dataElement.categoryCombo.id].categoryOptionCombos">
+                                {{oco.displayName !== 'default' ? oco.displayName : 'value' | translate }}
+                            </th>
+                        </tr>
+                        <tr ng-repeat="ou in selectedOrgUnit.c" ng-if="model.selectedDataSet.organisationUnits[ou]">
+                            <td class="vertical-center">
+                                {{model.selectedDataSet.organisationUnits[ou]}}                                
+                            </td>
+                            <td ng-repeat="oco in model.selectedCategoryCombos[dataElement.categoryCombo.id].categoryOptionCombos">
+                                <input type="text" 
+                                       class="form-control pull-center" 
+                                       ng-class="getInputNotifcationClass(ou, dataElement.id, oco.id)"
+                                       ng-model="model.dataValues[ou][dataElement.id][oco.id].value"
+                                       ng-dblclick="getAuditInfo(dataElement, ou, oco, model.dataValues[ou][dataElement.id][oco.id].value, model.dataValues[ou][dataElement.id][oco.id].comment)"
+                                       d2-blur="saveDataValue(ou, dataElement.id, oco.id)">
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div ng-repeat="indicator in model.selectedDataSet.indicators | orderBy: 'displayName'">
+                    <table class="table table-bordered table-condensed vertical-spacing">
+                        <tr>
+                            <th class="active pull-center vertical-center" colspan="2">
+                                {{indicator.displayName}}
+                            </th>
+                        </tr>
+                        <tr>
+                            <th class="active pull-center vertical-center">
+                                {{'org_unit'| translate}}
+                            </th>
+                            <th class="active pull-center vertical-center">
+                                {{'value' | translate }}
+                            </th>
+                        </tr>
+                        <tr ng-repeat="ou in selectedOrgUnit.c" ng-if="model.selectedDataSet.organisationUnits[ou]">
+                            <td class="vertical-center">
+                                {{model.selectedDataSet.organisationUnits[ou]}}                                
+                            </td>
+                            <td class="pull-center vertical-center">
+                                {{getIndicatorValue(indicator, ou)}}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="clear">
+            <div class="col-sm-6 selectionArea">
+                <button type="button" 
+                        class="btn btn-primary" 
+                        ng-disabled="model.dataSetCompletness[model.selectedAttributeOptionCombo]" 
+                        ng-click="saveCompletness()">
+                    {{'mark_complete'| translate}}
+                </button>
+                <button type="button" 
+                        class="btn btn-danger small-horizontal-spacing" 
+                        ng-disabled="!model.dataSetCompletness[model.selectedAttributeOptionCombo]" 
+                        ng-click="deleteCompletness(selectedOrgUnit.id, model.allowMultiOrgUnitEntry)">
+                    {{'mark_incomplete'| translate}}
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row" ng-if="!model.allowMultiOrgUnitEntry || model.selectedDataSet.entryMode.id === 'selected'">
+
+        <div class="col-sm-6 ">
+            <div ng-repeat="dataElement in model.selectedDataSet.dataElements | orderBy: 'displayFormName'"
+                 ng-init="coc = model.selectedCategoryCombos[dataElement.categoryCombo.id]">
+                <table class="table table-bordered table-condensed">
+                    <thead>
+                        <tr>
+                            <th class="active pull-center vertical-center">{{'action' | translate}}</th>
+                            <th class="active pull-center vertical-center" ng-repeat="oco in coc.categoryOptionCombos">
+                                {{oco.displayName !== 'default' ? oco.displayName : 'value' | translate }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="vertical-center">
+                                {{dataElement.displayFormName}}
+                            </td>
+                            <td ng-repeat="oco in coc.categoryOptionCombos">
+                                <input type="text" 
+                                       class="form-control pull-center" 
+                                       ng-model="model.dataValues[selectedOrgUnit.id][dataElement.id][oco.id].value"
+                                       ng-class="getInputNotifcationClass(selectedOrgUnit.id, dataElement.id, oco.id)"
+                                       ng-dblclick="getAuditInfo(dataElement, selectedOrgUnit, oco, model.dataValues[selectedOrgUnit.id][dataElement.id][oco.id].value, model.dataValues[selectedOrgUnit.id][dataElement.id][oco.id].comment)"
+                                       d2-blur="saveDataValue(selectedOrgUnit.id, dataElement.id, oco.id)">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div ng-repeat="indicator in model.selectedDataSet.indicators | orderBy: 'displayName'">
+                <table class="table table-bordered table-condensed">
+                    <thead>
+                        <tr>
+                            <th class="active pull-center vertical-center">{{'action' | translate}}</th>
+                            <th class="active pull-center vertical-center">
+                                {{'value' | translate }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="vertical-center">
+                                {{indicator.displayName}}
+                            </td>
+                            <td class="pull-center vertical-center">
+                                {{getIndicatorValue(indicator, selectedOrgUnit.id)}}
+                            </td>
+                        </tr>
+                    </tbody>                    
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>
