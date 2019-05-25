@@ -27,6 +27,8 @@
         <value>dhis-web-pivot</value>
         <value>dhis-web-visualizer</value>
         <value>dhis-web-mapping</value>
+        <value>dhis-web-action-mapping</value>
+        <value>dhis-web-financial-analysis</value>
         <value>dhis-web-event-reports</value>
         <value>dhis-web-event-visualizer</value>
         <value>dhis-web-dataentry</value>
