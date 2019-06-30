@@ -105,7 +105,7 @@
                                     <span ng-if="!dataElement.optionSetValue">
                                         <span ng-switch="dataElement.valueType">
                                             <span ng-switch-when="NUMBER">
-                                                <input type="number"  
+                                                <input type="text"  
                                                        name="fooNew"
                                                        d2-number-validator
                                                        number-type={{dataElement.valueType}}
@@ -116,7 +116,7 @@
                                                        d2-blur="saveDataValue(dataElement.id, model.selectedAgency.id, false)">
                                             </span>
                                             <span ng-switch-when="INTEGER">
-                                                <input type="number"   
+                                                <input type="text"   
                                                        name="fooNew"
                                                        d2-number-validator
                                                        number-type={{dataElement.valueType}}
@@ -127,7 +127,7 @@
                                                        d2-blur="saveDataValue(dataElement.id, model.selectedAgency.id, false)">
                                             </span>
                                             <span ng-switch-when="INTEGER_POSITIVE">
-                                                <input type="number" 
+                                                <input type="text" 
                                                        name="fooNew"
                                                        d2-number-validator
                                                        number-type={{dataElement.valueType}}
@@ -138,7 +138,7 @@
                                                        d2-blur="saveDataValue(dataElement.id, model.selectedAgency.id, false)">
                                             </span>
                                             <span ng-switch-when="INTEGER_NEGATIVE">
-                                                <input type="number"   
+                                                <input type="text"   
                                                        name="fooNew"
                                                        d2-number-validator
                                                        number-type={{dataElement.valueType}}
@@ -149,7 +149,7 @@
                                                        d2-blur="saveDataValue(dataElement.id, model.selectedAgency.id, false)">
                                             </span>
                                             <span ng-switch-when="INTEGER_ZERO_OR_POSITIVE">
-                                                <input type="number"   
+                                                <input type="text"   
                                                        name="fooNew"
                                                        d2-number-validator
                                                        number-type={{dataElement.valueType}}

@@ -136,6 +136,11 @@ sunFinance.controller('dataEntryController',
                 return;
             }            
             
+            if( $scope.model.selectedDataSet.dataElements.length > 1 ){
+                NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_budget_data_element_length"));
+                return;
+            }
+            
             loadOptionCombos();
             
             $scope.model.selectedCategoryCombos = {};
@@ -212,7 +217,7 @@ sunFinance.controller('dataEntryController',
                     if( response.dataValues.length > 0 ){
                         $scope.model.valueExists = true;
                         angular.forEach(response.dataValues, function(dv){
-                            ///dv.value = CommonUtils.formatDataValue( null, dv.value, $scope.model.dataElementsById[dv.dataElement], $scope.model.optionSets, 'USER' );
+                            dv.value = CommonUtils.formatDataValue( null, dv.value, $scope.model.dataElementsById[dv.dataElement], $scope.model.optionSets, 'USER' );
                             if(!$scope.model.dataValues[dv.dataElement]){
                                 $scope.model.dataValues[dv.dataElement] = {};
                             }
@@ -339,7 +344,8 @@ sunFinance.controller('dataEntryController',
             
             $scope.outerForm.submitted = false;
             $scope.outerForm.$error = {};
-            $scope.outerForm.$setPristine();            
+            $scope.outerForm.$setPristine();
+            copyDataValues();
             
             if( !isUpdate ){
                 processFundingAgency( deId, dataValue );
