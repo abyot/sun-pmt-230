@@ -229,6 +229,7 @@ var financialAnalysisServices = angular.module('financialAnalysisServices', ['ng
             });
             return def.promise;
         },
+        
         getActionAndBudgetDataSets: function(){
             var def = $q.defer();
             
@@ -461,7 +462,9 @@ var financialAnalysisServices = angular.module('financialAnalysisServices', ['ng
     return {
         get: function( uid ){
             if( orgUnit !== uid ){
-                orgUnitPromise = $http.get( '../api/organisationUnits.json?filter=path:like:/' + uid + '&fields=id,displayName,path,level,parent[id,displayName]&paging=false' ).then(function(response){
+                var url = '../api/organisationUnits.json?filter=path:like:/' + uid + '&fields=id,displayName,path,level,parent[id,displayName]&paging=false';
+                url = encodeURI( url );
+                orgUnitPromise = $http.get( url ).then(function(response){
                     orgUnit = response.data.id;
                     return response.data;
                 });

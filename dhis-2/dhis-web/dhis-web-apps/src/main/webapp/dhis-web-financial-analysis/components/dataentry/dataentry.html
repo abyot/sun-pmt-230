@@ -7,9 +7,9 @@
     <d2-left-bar></d2-left-bar>
 
     <div class="input-group">
-        <input type="text" id="searchField" name="key" class="form-control" placeholder="{{'search' | translate}}">
+        <input type="text" id="searchField" name="key" class="form-control" placeholder="{{'search'| translate}}">
         <span class="input-group-btn">
-            <button class="btn btn-primary" type="button" onclick="selection.findByName()">{{'go' | translate}}</button>
+            <button class="btn btn-primary" type="button" onclick="selection.findByName()">{{'go'| translate}}</button>
         </span>
     </div>
 
@@ -59,14 +59,26 @@
                         {{'action'| translate}}
                     </div>
                     <div class="col-sm-8">
-                        <ui-select ng-model="model.selectedDataSet" 
-                                   theme="select2"                                 
-                                   style="width:100%;">
-                            <ui-select-match allow-clear="true" class="form-control-ui-select" placeholder="{{model.dataSets && model.dataSets.length > 0 ? 'select_or_search' : 'empty'| translate}}">{{$select.selected.displayName|| $select.selected}}</ui-select-match>
-                            <ui-select-choices group-by="entryModeGroup" repeat="dataSet in model.dataSets | filter: $select.search | limitTo:maxOptionSize">
-                                <span ng-bind-html="dataSet.displayName | highlight: $select.search"></span>
-                            </ui-select-choices>
-                        </ui-select>
+                        <div ng-if="model.allowMultiOrgUnitEntry">
+                            <ui-select ng-model="model.selectedDataSet"
+                                       theme="select2"
+                                       style="width:100%;">
+                                <ui-select-match allow-clear="true" class="form-control-ui-select" placeholder="{{model.dataSets && model.dataSets.length > 0 ? 'select_or_search' : 'empty'| translate}}">{{$select.selected.displayName|| $select.selected}}</ui-select-match>
+                                <ui-select-choices group-by="entryModeGroup" repeat="dataSet in model.dataSets | filter: $select.search | limitTo:maxOptionSize">
+                                    <span ng-bind-html="dataSet.displayName | highlight: $select.search"></span>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
+                        <div ng-if="!model.allowMultiOrgUnitEntry">
+                            <ui-select ng-model="model.selectedDataSet"
+                                       theme="select2"
+                                       style="width:100%;">
+                                <ui-select-match allow-clear="true" class="form-control-ui-select" placeholder="{{model.dataSets && model.dataSets.length > 0 ? 'select_or_search' : 'empty'| translate}}">{{$select.selected.displayName|| $select.selected}}</ui-select-match>
+                                <ui-select-choices repeat="dataSet in model.dataSets | filter: $select.search | limitTo:maxOptionSize">
+                                    <span ng-bind-html="dataSet.displayName | highlight: $select.search"></span>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
                     </div>
                 </div>                
                 <div class="row small-vertical-spacing" ng-if="model.selectedDataSet && !model.invalidDimensions">
@@ -96,7 +108,7 @@
 
                                     <button type="button" 
                                             class="btn btn-default" 
-                                            ng-disabled="periodOffset > -1" 
+                                            ng-disabled="periodOffset > - 1" 
                                             ng-click="getPeriods('NXT')" 
                                             title="{{'next_periods'| translate}}">
                                         <i class="fa fa-caret-right"></i>
@@ -133,7 +145,9 @@
         </div>
 
         <!-- form begins -->
-        <div ng-include="'components/dataentry/dataentry-form.html'"></div>
+        <form name="outerForm" novalidate>
+            <div ng-include="'components/dataentry/dataentry-form.html'"></div>
+        </form>
         <!-- form ends -->
 
     </div>

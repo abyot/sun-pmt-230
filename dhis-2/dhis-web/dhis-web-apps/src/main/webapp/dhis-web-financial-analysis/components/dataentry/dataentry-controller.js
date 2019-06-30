@@ -20,7 +20,8 @@ sunFinance.controller('dataEntryController',
                 DataValueService,
                 CompletenessService,
                 ModalService,
-                DialogService) {
+                DialogService,
+                NotificationService) {
     $scope.periodOffset = 0;
     $scope.saveStatus = {};    
     $scope.model = {invalidDimensions: false,
@@ -33,11 +34,13 @@ sunFinance.controller('dataEntryController',
                     categoryOptionsReady: false,
                     allowMultiOrgUnitEntry: false,
                     dataValues: {},
-                    orgUnitsWithValues: [],
+                    optionCombosById: {},
                     selectedAttributeOptionCombos: {},
                     selectedAttributeOptionCombo: null,
                     attributeCategoryUrl: null,
-                    valueExists: false};
+                    valueExists: false,
+                    agenciesWithValue: {},
+                    selectedAgency: null};
     
     //watch for selection of org unit from tree
     $scope.$watch('selectedOrgUnit', function() {
@@ -47,14 +50,9 @@ sunFinance.controller('dataEntryController',
         $scope.model.selectedPeriod = null;
         $scope.model.selectedAttributeCategoryCombo = null;
         $scope.model.selectedAttributeOptionCombos = {};
-        $scope.model.selectedAttributeOptionCombo = null;
-        $scope.model.selectedProgram = null;
-        $scope.model.stakeholderRoles = {};
-        $scope.model.dataValues = {};
-        $scope.model.basicAuditInfo = {};
-        $scope.model.orgUnitsWithValues = [];
+        $scope.model.selectedAttributeOptionCombo = null;        
         $scope.model.categoryOptionsReady = false;
-        $scope.model.valueExists = false;
+        resetParams();
         if( angular.isObject($scope.selectedOrgUnit)){
             SessionStorageService.set('SELECTED_OU', $scope.selectedOrgUnit); 
             var systemSetting = storage.get('SYSTEM_SETTING');
@@ -102,9 +100,6 @@ sunFinance.controller('dataEntryController',
         $scope.model.selectedAttributeOptionCombos = {};
         $scope.model.selectedAttributeOptionCombo = null;        
         $scope.model.selectedPeriod = null;
-        $scope.model.orgUnitsWithValues = [];
-        $scope.model.dataValues = {};
-        $scope.model.valueExists = false;
         $scope.model.categoryOptionsReady = false;
         if (angular.isObject($scope.selectedOrgUnit)) {
             DataSetFactory.getByOuAndProperty( $scope.selectedOrgUnit, 'dataSetType','budget' ).then(function(dataSets){
@@ -119,12 +114,7 @@ sunFinance.controller('dataEntryController',
         $scope.model.periods = [];
         $scope.model.selectedPeriod = null;
         $scope.model.categoryOptionsReady = false;
-        $scope.model.stakeholderRoles = {};
-        $scope.model.dataValues = {};
-        $scope.model.selectedProgram = null;
-        $scope.model.selectedEvent = {};
-        $scope.model.orgUnitsWithValues = [];
-        $scope.model.valueExists = false;
+        resetParams();
         if( angular.isObject($scope.model.selectedDataSet ) && $scope.model.selectedDataSet.id ){
             $scope.loadDataSetDetails();
         }
@@ -141,38 +131,66 @@ sunFinance.controller('dataEntryController',
             
             $scope.model.periods = PeriodService.getPeriods($scope.model.selectedDataSet.periodType, $scope.periodOffset, $scope.model.selectedDataSet.openFuturePeriods);
             
-            if(!$scope.model.selectedDataSet.dataElements || $scope.model.selectedDataSet.dataElements.length < 1){                
-                $scope.invalidCategoryDimensionConfiguration('error', 'missing_data_elements_indicators');
+            if(!$scope.model.selectedDataSet.dataElements || $scope.model.selectedDataSet.dataElements.length < 1){
+                NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_data_elements_indicators"));
                 return;
             }            
             
-            loadOptionCombos();            
+            loadOptionCombos();
             
             $scope.model.selectedCategoryCombos = {};
+            var cocs = [];
+            $scope.model.dataElementsById = {};
             angular.forEach($scope.model.selectedDataSet.dataElements, function(de){
-                MetaDataFactory.get('categoryCombos', de.categoryCombo.id).then(function(coc){
-                    if( coc.isDefault ){
-                        $scope.model.defaultCategoryCombo = coc;
-                    }
-                    $scope.model.selectedCategoryCombos[de.categoryCombo.id] = coc;
-                });                
+                $scope.model.dataElementsById[de.id] = de;
+                if ( cocs.indexOf( de.categoryCombo.id ) === - 1 ){
+                    cocs.push( de.categoryCombo.id );
+                }                
+            });
+
+            if ( cocs.length !== 1 )
+            {
+                NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_budget_dimension_configuration"));
+                return;
+            }
+            
+            MetaDataFactory.get('categoryCombos', cocs[0]).then(function(coc){                
+                if( coc.isDefault ){
+                    $scope.model.defaultCategoryCombo = coc;
+                }
+                $scope.model.selectedCategoryCombos[cocs[0]] = coc;
+                
+                angular.forEach(coc.categoryOptionCombos, function(coco){
+                    $scope.model.optionCombosById[coco.id] = coco;
+                });
             });
         }
     };
     
     var resetParams = function(){
-        $scope.model.dataValues = {};
-        $scope.model.roleValues = {};
-        $scope.model.orgUnitsWithValues = [];
-        $scope.model.selectedEvent = {};
+        $scope.model.dataValues = {};        
         $scope.model.valueExists = false;
-        $scope.model.stakeholderRoles = {};
         $scope.model.basicAuditInfo = {};
         $scope.model.basicAuditInfo.exists = false;
-        $scope.model.rolesAreDifferent = false;
         $scope.saveStatus = {};
-        $scope.commonOrgUnit = null;
-        $scope.commonOptionCombo = null;
+        $scope.model.agenciesWithValue = {};
+        $scope.model.selectedAgency = null;
+    };
+    
+    var processFundingAgency = function( deId, value ){
+        var agency = $scope.model.optionCombosById[value.categoryOptionCombo];
+        if ( agency && agency.displayName ){
+            value.fundingAgency = agency.displayName;
+        }
+                            
+        if(!$scope.model.agenciesWithValue[deId]){
+            $scope.model.agenciesWithValue[deId] = [];
+        }
+        $scope.model.agenciesWithValue[deId].push( value );
+    };
+    
+    var copyDataValues = function(){
+        $scope.dataValuesCopy = angular.copy( $scope.model.dataValues );
     };
     
     $scope.loadDataEntryForm = function(){
@@ -183,16 +201,7 @@ sunFinance.controller('dataEntryController',
                 angular.isObject( $scope.model.selectedPeriod) && $scope.model.selectedPeriod.id &&
                 $scope.model.categoryOptionsReady ){
             
-            var dataValueSetUrl = 'dataSet=' + $scope.model.selectedDataSet.id + '&period=' + $scope.model.selectedPeriod.id;
-
-            if( $scope.model.allowMultiOrgUnitEntry && $scope.model.selectedDataSet.entryMode.id === 'children'){
-                angular.forEach($scope.selectedOrgUnit.c, function(c){
-                    dataValueSetUrl += '&orgUnit=' + c;
-                });
-            }
-            else if( !$scope.model.allowMultiOrgUnitEntry || $scope.model.selectedDataSet.entryMode.id === "selected" ){
-                dataValueSetUrl += '&orgUnit=' + $scope.selectedOrgUnit.id;
-            }
+            var dataValueSetUrl = 'dataSet=' + $scope.model.selectedDataSet.id + '&period=' + $scope.model.selectedPeriod.id + '&orgUnit=' + $scope.selectedOrgUnit.id;
             
             $scope.model.selectedAttributeOptionCombo = CommonUtils.getOptionComboIdFromOptionNames($scope.model.selectedAttributeOptionCombos, $scope.model.selectedOptions);
 
@@ -203,17 +212,14 @@ sunFinance.controller('dataEntryController',
                     if( response.dataValues.length > 0 ){
                         $scope.model.valueExists = true;
                         angular.forEach(response.dataValues, function(dv){
-                            if(!$scope.model.dataValues[dv.orgUnit]){
-                                $scope.model.dataValues[dv.orgUnit] = {};
-                                $scope.model.dataValues[dv.orgUnit][dv.dataElement] = {};
-                                $scope.model.dataValues[dv.orgUnit][dv.dataElement][dv.categoryOptionCombo] = dv;
+                            ///dv.value = CommonUtils.formatDataValue( null, dv.value, $scope.model.dataElementsById[dv.dataElement], $scope.model.optionSets, 'USER' );
+                            if(!$scope.model.dataValues[dv.dataElement]){
+                                $scope.model.dataValues[dv.dataElement] = {};
                             }
-                            else{
-                                if(!$scope.model.dataValues[dv.orgUnit][dv.dataElement]){
-                                    $scope.model.dataValues[dv.orgUnit][dv.dataElement] = {};
-                                }
-                                $scope.model.dataValues[dv.orgUnit][dv.dataElement][dv.categoryOptionCombo] = dv;
-                            }                 
+                            $scope.model.dataValues[dv.dataElement][dv.categoryOptionCombo] = dv;
+                            
+                            processFundingAgency( dv.dataElement, dv );
+                            
                         });
 
                         response.dataValues = orderByFilter(response.dataValues, '-created').reverse();                    
@@ -221,13 +227,8 @@ sunFinance.controller('dataEntryController',
                         $scope.model.basicAuditInfo.storedBy = response.dataValues[0].storedBy;
                         $scope.model.basicAuditInfo.exists = true;
                     }
-                    
-                    angular.forEach($scope.model.dataValues, function(ouVals, ou) {
-                        angular.forEach($scope.model.dataValues[ou], function(vals,de){
-                            $scope.model.dataValues[ou][de] = CommonUtils.getDataElementTotal( $scope.model.dataValues[ou], de);
-                        });
-                    });
-                }                
+                }
+                copyDataValues();
             });
             
             $scope.model.dataSetCompletness = {};
@@ -249,6 +250,7 @@ sunFinance.controller('dataEntryController',
     };
     
     function checkOptions(){
+        $scope.model.categoryOptionsReady = false;
         resetParams();
         for(var i=0; i<$scope.model.selectedAttributeCategoryCombo.categories.length; i++){
             if($scope.model.selectedAttributeCategoryCombo.categories[i].selectedOption && $scope.model.selectedAttributeCategoryCombo.categories[i].selectedOption.id){
@@ -292,33 +294,76 @@ sunFinance.controller('dataEntryController',
         }
     };
         
-    $scope.saveDataValue = function( ouId, deId, ocId ){
+    $scope.saveDataValue = function( deId, ocId, isUpdate ){
         
-        $scope.saveStatus[ouId + '-' + deId + '-' + ocId] = {saved: false, pending: true, error: false};
+        $scope.saveStatus[deId + '-' + ocId] = {};
+        
+        //check for form validity
+        $scope.outerForm.submitted = true;
+        var inputForm = $scope.outerForm;
+        if( isUpdate ){
+            inputForm = $scope.outerForm.innerUpdateForm ? $scope.outerForm.innerUpdateForm : inputForm;
+        }
+        else{
+            inputForm = $scope.outerForm.innerAddForm ? $scope.outerForm.innerAddForm : inputForm;
+        }
+        
+        if( inputForm.$invalid ){
+            $scope.saveStatus[deId + '-' + ocId] = {saved: false, pending: false, error: true};
+            if( $scope.model.dataValues[deId] ){
+                $scope.model.dataValues[deId][ocId] = $scope.dataValuesCopy[deId] && $scope.dataValuesCopy[deId][ocId] ? $scope.dataValuesCopy[deId][ocId] : {value: null};
+            }
+            $scope.outerForm.$error = {};
+            $scope.outerForm.$setPristine();
+            $scope.outerForm.submitted = false;
+            return ;
+        }
+        
+        $scope.saveStatus[deId + '-' + ocId] = {saved: false, pending: true, error: false};
         
         var dataValue = {
-            ou: ouId,
+            ou: $scope.selectedOrgUnit.id,
             pe: $scope.model.selectedPeriod.id,
             de: deId,
             co: ocId,
             cc: $scope.model.selectedAttributeCategoryCombo.id,
             cp: CommonUtils.getOptionIds($scope.model.selectedOptions),
-            value: $scope.model.dataValues[ouId][deId][ocId].value
-        };
-        
-        var processDataValue = function(){
-            $scope.model.dataValues[ouId][deId] = CommonUtils.getDataElementTotal( $scope.model.dataValues[ouId], deId);
+            value: $scope.model.dataValues[deId][ocId].value
         };
                 
         DataValueService.saveDataValue( dataValue ).then(function(response){
-           $scope.saveStatus[ouId + '-' + deId + '-' + ocId].saved = true;
-           $scope.saveStatus[ouId + '-' + deId + '-' + ocId].pending = false;
-           $scope.saveStatus[ouId + '-' + deId + '-' + ocId].error = false;
-           processDataValue();
+            $scope.saveStatus[deId + '-' + ocId].saved = true;
+            $scope.saveStatus[deId + '-' + ocId].pending = false;
+            $scope.saveStatus[deId + '-' + ocId].error = false;
+            dataValue.categoryOptionCombo = ocId;
+            
+            $scope.outerForm.submitted = false;
+            $scope.outerForm.$error = {};
+            $scope.outerForm.$setPristine();            
+            
+            if( !isUpdate ){
+                processFundingAgency( deId, dataValue );
+                $scope.model.selectedAgency = null;
+            }
+            else{
+                if( dataValue.value === "" ){
+                    var index = -1;
+                    for(var i=0; i< $scope.model.agenciesWithValue[deId].length; i++){
+                        if($scope.model.agenciesWithValue[deId][i].categoryOptionCombo === ocId){
+                            index = i;
+                            break;
+                        }
+                    }
+                    if( index !== -1){
+                        $scope.model.agenciesWithValue[deId].splice(index,1);
+                    }
+                }
+            }
+           
         }, function(){
-            $scope.saveStatus[ouId + '-' + deId + '-' + ocId].saved = false;
-            $scope.saveStatus[ouId + '-' + deId + '-' + ocId].pending = false;
-            $scope.saveStatus[ouId + '-' + deId + '-' + ocId].error = true;
+            $scope.saveStatus[deId + '-' + ocId].saved = false;
+            $scope.saveStatus[deId + '-' + ocId].pending = false;
+            $scope.saveStatus[deId + '-' + ocId].error = true;
         });
     };
     
@@ -395,9 +440,9 @@ sunFinance.controller('dataEntryController',
         });        
     };
     
-    $scope.getInputNotifcationClass = function(ouId, deId, ocId){
+    $scope.getInputNotifcationClass = function(deId, ocId){
 
-        var currentElement = $scope.saveStatus[ouId + '-' + deId + '-' + ocId];        
+        var currentElement = $scope.saveStatus[ deId + '-' + ocId];        
         
         if( currentElement ){
             if(currentElement.pending){
@@ -468,4 +513,11 @@ sunFinance.controller('dataEntryController',
         return res;
     };
     
+    $scope.interacted = function(field) {
+        var status = false;
+        if(field){
+            status = $scope.outerForm.submitted || field.$dirty;
+        }
+        return status;
+    };
 });
