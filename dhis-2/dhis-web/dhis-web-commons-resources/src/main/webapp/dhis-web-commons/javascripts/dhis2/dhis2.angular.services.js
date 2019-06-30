@@ -351,9 +351,10 @@ var d2Services = angular.module('d2Services', ['ngResource'])
             return false;            	
         },
         userHasWriteAccess: function( dataSetId ){
-        	var dataSets = SessionStorageService.get('ACCESSIBLE_DATASETS');
+            var dataSets = SessionStorageService.get('ACCESSIBLE_DATASETS');
             dataSets = dataSets.dataSets;
-            if (dataSets && dataSets.length) {
+            if (dataSets && dataSets.dataSets && dataSets.dataSets.length) {
+                dataSets = dataSets.dataSets;
                 for (var i = 0; i < dataSets.length; i++) {
                     if (dataSets[i].id === dataSetId && dataSets[i].access && dataSets[i].access.data && dataSets[i].access.data.write) {
                         return true;
