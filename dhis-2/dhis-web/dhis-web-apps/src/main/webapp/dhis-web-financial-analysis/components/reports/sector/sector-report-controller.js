@@ -9,7 +9,6 @@ sunFinance.controller('SectorReportController',
                 function($scope,
                 $filter,
                 $translate,
-                orderByFilter,
                 SessionStorageService,
                 DialogService,
                 PeriodService,
@@ -17,7 +16,8 @@ sunFinance.controller('SectorReportController',
                 DataSetFactory,
                 CommonUtils,
                 OptionComboService,
-                ReportService) {
+                ReportService,
+                NotificationService) {
     $scope.periodOffset = 0;
     $scope.showReportFilters = true;
     $scope.reportReady = false;
@@ -31,7 +31,8 @@ sunFinance.controller('SectorReportController',
         ouLevels: [],
         mappedOptionCombos: null,
         mappedValues: null,
-        
+        selectedAttributeCategoryCombo: null,
+        selectedAttributeOptionCombos: {},
         childrenIds: [],
         children: []};
     
@@ -74,6 +75,26 @@ sunFinance.controller('SectorReportController',
             $scope.model.budgetDataSets = [];
             DataSetFactory.getSectorBudgetDataSets().then(function(dataSets){
                 $scope.model.budgetDataSets = dataSets;
+                var acos = [];
+                angular.forEach($scope.model.budgetDataSets, function(ds){
+                    if ( ds.categoryCombo && ds.categoryCombo.id && acos.indexOf( ds.categoryCombo.id ) === - 1 ){
+                        acos.push( ds.categoryCombo.id );
+                    }
+                });
+
+                if ( acos.length !== 1 )
+                {
+                    NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_budget_dataset_dimension_configuration"));
+                    return;
+                }
+
+                $scope.model.selectedAttributeOptionCombos = {};
+                MetaDataFactory.get('categoryCombos', acos[0]).then(function(coc){
+                    $scope.model.selectedAttributeCategoryCombo = coc;
+                    angular.forEach($scope.model.selectedAttributeCategoryCombo.categoryOptionCombos, function(oco){
+                        $scope.model.selectedAttributeOptionCombos['"' + oco.displayName + '"'] = oco.id;
+                    });
+                });
             });
 
             SessionStorageService.set('SELECTED_OU', $scope.selectedOrgUnit);
@@ -120,6 +141,18 @@ sunFinance.controller('SectorReportController',
             return;
         }
 
+        var selectedAgency = null;
+        if( $scope.model.selectedAttributeCategoryCombo && 
+                $scope.model.selectedAttributeCategoryCombo.categories &&
+                $scope.model.selectedAttributeCategoryCombo.categories.length &&
+                $scope.model.selectedAttributeCategoryCombo.categories[0].selectedOption ){
+            selectedAgency = $scope.model.selectedAttributeCategoryCombo.categories[0].selectedOption;
+        }
+
+        if(selectedAgency){
+            $scope.model.selectedAttributeOptionCombo = CommonUtils.getOptionComboIdFromOptionNames($scope.model.selectedAttributeOptionCombos, [selectedAgency]);
+        }
+
         $scope.orgUnits = [];
         if($scope.model.selectedOuMode.level !== $scope.selectedOrgUnit.l ){
             $scope.orgUnits = $scope.model.children;
@@ -137,6 +170,10 @@ sunFinance.controller('SectorReportController',
             dataValueSetUrl += '&dataSet=' + ds.id;
         });
         
+        if( $scope.model.selectedAttributeOptionCombo ){
+            dataValueSetUrl += '&attributeOptionCombo=' + $scope.model.selectedAttributeOptionCombo;
+        }
+
         if( $scope.selectedOrgUnit.l === 3 ){
             dataValueSetUrl += '&orgUnit=' + $scope.selectedOrgUnit.id;
         }        

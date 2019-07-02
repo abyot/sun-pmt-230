@@ -119,7 +119,7 @@ var actionMappingServices = angular.module('actionMappingServices', ['ngResource
             
             return def.promise;            
         },
-        getMappedOptionCombos: function(uid){            
+        getMappedOptionCombos: function(){
             var def = $q.defer();            
             var optionCombos = [];
             PMTStorageService.currentStore.open().done(function(){

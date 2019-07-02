@@ -24,7 +24,7 @@
     <div class="small-horizontal-spacing" ng-if="!treeLoaded">
         {{'loading_tree'| translate}}
     </div>
-    
+
     <d2-can-menu></d2-can-menu>
 
 </div>
@@ -47,7 +47,7 @@
                 {{'sector_level_financial_report'| translate}}
             </h2>
             <div class="report-heading">
-                {{'sector_level_financial_report_heading' | translate}}
+                {{'sector_level_financial_report_heading'| translate}}
             </div>
             <!-- report heading ends -->
 
@@ -97,11 +97,33 @@
                                                 <button type="button" class="btn btn-default" ng-click="getPeriods('PRV')" title="{{'previous_periods'| translate}}">{{'prev'| translate}}</button>
                                             </span>
                                             <span class="pull-right">
-                                                <button type="button" class="btn btn-default" ng-disabled="periodOffset > -1" ng-click="getPeriods('NXT')" title="{{'next_periods'| translate}}">{{'next'| translate}}</button>
+                                                <button type="button" class="btn btn-default" ng-disabled="periodOffset > - 1" ng-click="getPeriods('NXT')" title="{{'next_periods'| translate}}">{{'next'| translate}}</button>
                                             </span>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="form-group" ng-repeat="category in model.selectedAttributeCategoryCombo.categories">
+                                <label class="control-label col-sm-3">
+                                    {{category.displayName}}
+                                    <span class="required">*</span>
+                                </label>
+                                <div class="col-sm-9">
+                                    <ui-select ng-model="category.selectedOption"
+                                               theme="select2"
+                                               name="selectedAgency"
+                                               ng-required="true"
+                                               on-select="getCategoryOptions(category)"
+                                               style="width:100%;">
+                                        <ui-select-match allow-clear="true" class="form-control-ui-select" placeholder="{{category.categoryOptions && category.categoryOptions.length > 0 ? 'select_or_search' : 'empty'| translate}}">{{$select.selected.displayName|| $select.selected}}</ui-select-match>
+                                        <ui-select-choices  repeat="option in category.categoryOptions | filter: $select.search | limitTo:maxOptionSize">
+                                            <span ng-bind-html="option.displayName | highlight: $select.search"></span>
+                                        </ui-select-choices>
+                                    </ui-select>
+                                    <div ng-messages="sectorForm.selectedAgency.$error" ng-if="interacted(sectorForm.selectedAgency)" class="required" ng-messages-include="../dhis-web-commons/angular-forms/error-messages.html">
+                                    </div>
+                                </div>
+
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">
@@ -109,12 +131,12 @@
                                     <i class="fa fa-question-circle superscript" 
                                        popover-template="'reportingLevelInfo.html'"
                                        popover-trigger="mouseenter" tooltip-placement="bottom" tooltip-class="custom-tooltip-class"></i>
-                                        <script type="text/ng-template" id="reportingLevelInfo.html">
-                                            <div class="info-style">
-                                                <p>{{'reporting_level_info_1' | translate}}</p><br>
-                                                <p>{{'reporting_level_info_2' | translate}}</p>
-                                            </div>
-                                        </script>
+                                    <script type="text/ng-template" id="reportingLevelInfo.html">
+                                        <div class="info-style">
+                                        <p>{{'reporting_level_info_1' | translate}}</p><br>
+                                        <p>{{'reporting_level_info_2' | translate}}</p>
+                                        </div>
+                                    </script>
                                     <span class="required">*</span>
                                 </label>
                                 <div class="col-sm-9">
@@ -182,21 +204,21 @@
                         <thead>
                             <tr>
                                 <th>
-                                    {{'action' | translate}}
+                                    {{'action'| translate}}
                                 </th>
                                 <th>
-                                    {{'location' | translate}}
+                                    {{'location'| translate}}
                                 </th>
                                 <th>
-                                    {{'budget_allocated' | translate}}
+                                    {{'budget_allocated'| translate}}
                                 </th>
                                 <th>
-                                    {{'contributing_agency' | translate}}
+                                    {{'contributing_agency'| translate}}
                                 </th>
                             </tr>
                         </thead>
                         <!--(eventValueAudits | filter: {dataElement: {id: prStDe.dataElement.id}}).length > 0-->
-                        <tbody ng-repeat="de in model.budgetDataElements | orderBy : 'displayName'" 
+                        <tbody ng-repeat="de in model.budgetDataElements| orderBy : 'displayName'" 
                                ng-init="rowValues = (model.budgetDataValues | filter : {dataElement: de.id})">
                             <tr ng-repeat="rowValue in rowValues">
                                 <td rowspan="{{rowValues.length}}" ng-if="$index === 0">
@@ -214,7 +236,7 @@
                             </tr>
                             <tr ng-if="rowValues.length > 1">
                                 <td class="bold">
-                                    {{de.displayName}} - {{'total' | translate}}
+                                    {{de.displayName}} - {{'total'| translate}}
                                 </td>
                                 <td></td>
                                 <td class="bold">

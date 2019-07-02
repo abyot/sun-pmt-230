@@ -501,7 +501,7 @@ var financialAnalysisServices = angular.module('financialAnalysisServices', ['ng
             DataValueService.getDataValueSet( reportParams.dataValueSetUrl ).then(function( response ){                
                 if( response && response.dataValues ){
                     angular.forEach(response.dataValues, function(dv){
-                        var oco = reportData.mappedOptionCombos[dv.attributeOptionCombo];
+                        var oco = reportData.mappedOptionCombos[dv.categoryOptionCombo];
                         if( oco && oco.displayName ){
                             dv.agencyName = oco.displayName;
                             if( dv.value ){
